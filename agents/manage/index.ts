@@ -1,4 +1,5 @@
 import type { AgentContext } from '@edgeone/types';
+import { withLocalFallbackStore } from "../_local-store";
 import type { BaseStore } from '@langchain/langgraph';
 /**
  * Document Management — list, get, delete, edit documents in the knowledge base.
@@ -115,7 +116,8 @@ async function regenerateSummary(
   return { summary: text.slice(0, 400), keywords: [] };
 }
 
-export async function onRequest(context: AgentContext) {
+export async function onRequest(rawContext: AgentContext) {
+  const context = withLocalFallbackStore(rawContext); // dev-only in-memory fallback; no-op when deployed
   const { request } = context;
   const env = context.env ?? {};
   const body = (request?.body ?? {}) as Record<string, any>;

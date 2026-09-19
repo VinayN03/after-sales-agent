@@ -401,7 +401,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
         <button
           onClick={() => setActiveCategory("all")}
           className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] ${
-            activeCategory === "all" ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+            activeCategory === "all" ? "bg-indigo-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
           }`}
         >{t("ui.manage.tabAll")}</button>
         {CATEGORIES.map(cat => (
@@ -409,7 +409,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
             key={cat.value}
             onClick={() => setActiveCategory(cat.value)}
             className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] ${
-              activeCategory === cat.value ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
+              activeCategory === cat.value ? "bg-indigo-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
             }`}
           >{cat.icon} {cat.label}</button>
         ))}
@@ -419,7 +419,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
       <div className="px-3 py-2.5 flex items-center gap-2 border-b border-gray-50 flex-shrink-0">
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="text-[11px] h-7 px-2.5 rounded-md bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
+          className="text-[11px] h-7 px-2.5 rounded-md bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
         >{t("ui.manage.btn.upload")}</button>
         <button
           onClick={() => {

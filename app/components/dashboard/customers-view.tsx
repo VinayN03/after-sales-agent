@@ -103,7 +103,7 @@ export function CustomersView({ onOpenApprovals }: { onOpenApprovals: () => void
               </div>
 
               {open === c.id && (
-                <div className="fade-up grid gap-4 border-b border-slate-100 bg-slate-50/60 px-3 py-3 text-[11.5px] text-slate-600 md:grid-cols-3">
+                <div className="fade-up grid gap-4 border-b border-slate-100 bg-slate-50/60 px-3 py-3 text-[11.5px] text-slate-600 @3xl:grid-cols-3">
                   <div>
                     <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Contact & payment</div>
                     <div>{c.email}</div>

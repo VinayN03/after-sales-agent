@@ -1,4 +1,5 @@
 import type { AgentContext } from '@edgeone/types';
+import { withLocalFallbackStore } from "../_local-store";
 import type { BaseStore } from '@langchain/langgraph';
 /**
  * Seed Demo Agent — imports demo documents into the knowledge base.
@@ -131,7 +132,8 @@ async function* streamSeedDemo(store: any, locale: Locale, env: AgentEnv): Async
   yield "data: [DONE]\n\n";
 }
 
-export async function onRequest(context: AgentContext) {
+export async function onRequest(rawContext: AgentContext) {
+  const context = withLocalFallbackStore(rawContext); // dev-only in-memory fallback; no-op when deployed
   const env = context.env ?? {};
   if (!env.AI_GATEWAY_API_KEY || !env.AI_GATEWAY_BASE_URL) {
     return new Response(JSON.stringify({ error: "AI Gateway not configured" }), {

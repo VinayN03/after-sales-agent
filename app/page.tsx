@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { MessageSquare, X } from "lucide-react";
 import { ChatPanel } from "./components/chat-panel";
 import { ManagePanel } from "./components/manage-panel";
 import { EdgeNav, type View } from "./components/dashboard/edge-nav";
@@ -165,7 +165,7 @@ export default function Home() {
         />
 
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className="@container min-w-0 flex-1 overflow-y-auto">
           {view === "home" && (
             <HomeView
               cases={cases}
@@ -187,17 +187,26 @@ export default function Home() {
 
         </div>
 
-        {/* Chat dock — on Home it takes the right half and the dashboard reflows into the left half;
-            on other screens it slides over them (so tables aren't squeezed). Always mounted. */}
+        {/* Chat launcher: a persistent icon on the right edge, vertically centred, reachable from every screen. */}
+        <button
+          onClick={openChat}
+          aria-label="Open chat"
+          title="Chat with the assistant"
+          tabIndex={chatOpen ? -1 : 0}
+          className={`absolute right-0 top-1/2 z-20 flex h-12 w-11 -translate-y-1/2 items-center justify-center rounded-l-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-[-4px_6px_20px_rgba(79,70,229,0.35)] transition-[opacity,transform] duration-200 active:scale-95 ${
+            chatOpen ? "pointer-events-none translate-x-full opacity-0" : "opacity-100"
+          }`}
+        >
+          <MessageSquare className="h-5 w-5" strokeWidth={1.9} />
+        </button>
+
+        {/* Chat dock — splits EVERY screen: the current screen keeps the left half, the chat takes the right half.
+            Always mounted so the conversation persists. */}
         <aside
           aria-label="Chat"
           inert={!chatOpen}
-          className={`overflow-hidden border-slate-200/80 bg-white [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] ${
-            view === "home"
-              ? `relative flex-shrink-0 transition-[width] duration-300 ${chatOpen ? "w-1/2 border-l" : "w-0"}`
-              : `absolute inset-y-0 right-0 z-30 w-1/2 min-w-[360px] border-l transition-transform duration-300 ${
-                  chatOpen ? "translate-x-0 shadow-[-12px_0_32px_rgba(15,23,42,0.12)]" : "translate-x-full"
-                }`
+          className={`relative flex-shrink-0 overflow-hidden border-slate-200/80 bg-white transition-[width] duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] ${
+            chatOpen ? "w-1/2 border-l" : "w-0"
           }`}
         >
           <div className="flex h-full min-w-[360px] flex-col">
@@ -225,10 +234,17 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Knowledge base: a drawer over everything (it is a management tool, not part of the split). */}
       {showManage && (
-        <aside className="w-[380px] flex-shrink-0 border-l border-gray-200/80 bg-white shadow-[-4px_0_12px_rgba(0,0,0,0.03)]">
-          <ManagePanel onClose={() => setShowManage(false)} />
-        </aside>
+        <>
+          <div className="fixed inset-0 z-40 bg-slate-900/10" onClick={() => setShowManage(false)} aria-hidden="true" />
+          <aside
+            aria-label="Knowledge base"
+            className="slide-in-right fixed inset-y-0 right-0 z-50 w-[420px] max-w-[92vw] border-l border-slate-200 bg-white shadow-[-16px_0_40px_rgba(15,23,42,0.14)]"
+          >
+            <ManagePanel onClose={() => setShowManage(false)} />
+          </aside>
+        </>
       )}
 
       {showResetModal && (

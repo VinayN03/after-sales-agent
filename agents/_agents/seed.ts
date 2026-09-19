@@ -9,6 +9,8 @@ import type { BaseStore } from '@langchain/langgraph';
  * It uses dedicated orders (ORD-…-2xx) and never touches the six live-demo scenarios (ORD-…-101…106).
  * A marker in KV makes it run once; Reset clears the marker so the next load re-seeds.
  */
+import { saveDoc } from "../../lib/doc-store";
+import { getDemoDocs } from "../_data/demo-docs";
 import { createLogger, getOrder } from "../_shared";
 import { ensureDemoOrders } from "./data";
 import { closeCase, executeCase, makeEmitter } from "./execution";
@@ -47,6 +49,24 @@ function backdate(c: Case, minutes: number) {
   for (const t of c.toolCalls ?? []) t.ts = shift(t.ts);
 }
 
+/**
+ * Knowledge-base policy documents, pre-loaded WITHOUT a model call: the summary is simply the document's
+ * opening, so the Knowledge base isn't empty and the FAQ path has something to route to. (The "Import demo
+ * data" button in the panel still works and generates model-written summaries.)
+ */
+async function seedDocs(context: AgentContext, kv: BaseStore): Promise<void> {
+  if (await kv.get(META_NAMESPACE, "docs_seeded")) return;
+  for (const doc of getDemoDocs("en")) {
+    if (doc.category === "order_doc") continue; // orders are seeded separately
+    const slug = doc.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+    const oneLine = doc.content.replace(/\s+/g, " ").trim();
+    const summary = `${doc.title}: ${oneLine.slice(0, 160)}${oneLine.length > 160 ? "…" : ""}`;
+    const keywords = [...new Set([doc.category, ...doc.title.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2)])].slice(0, 6);
+    await saveDoc(context.store, doc.category, `demo-${doc.category}-${slug}`, doc.title, doc.content, summary, keywords);
+  }
+  await kv.put(META_NAMESPACE, "docs_seeded", { at: new Date().toISOString() });
+}
+
 let inflight: Promise<void> | null = null;
 
 /** Seed once (concurrent callers share one run). Safe to call on every list request. */
@@ -60,6 +80,7 @@ async function seed(context: AgentContext): Promise<void> {
   const kv = context?.store?.langgraphStore as BaseStore | undefined;
   if (!kv) return;
   try {
+    await seedDocs(context, kv);
     if (await kv.get(META_NAMESPACE, "seeded")) return;
     await ensureDemoOrders(context);
 

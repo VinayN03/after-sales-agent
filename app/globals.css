@@ -67,3 +67,7 @@ body {
   .fade-up { animation-name: fade-in; }
   .press:active:not(:disabled) { transform: none; }
 }
+
+@keyframes slide-in-right { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+.slide-in-right { animation: slide-in-right 260ms var(--ease-out) both; }
+@media (prefers-reduced-motion: reduce) { .slide-in-right { animation-name: fade-in; } }

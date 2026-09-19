@@ -369,9 +369,9 @@ function ToolsCard({ s, index }: { s: SettingsPayload; index: number }) {
       subtitle={SECTIONS.tools.subtitle}
       icon={SECTIONS.tools.icon}
       index={index}
-      className="xl:col-span-2"
+      className="@7xl:col-span-2"
       aside={
-        <span className="hidden text-[11px] font-medium text-slate-500 sm:block">
+        <span className="hidden text-[11px] font-medium text-slate-500 @2xl:block">
           {tools.length} tools &middot; {approvalCount} need approval
         </span>
       }
@@ -696,7 +696,7 @@ export function SettingsView({ onReset }: { onReset: () => void }) {
         <p className="text-[12px] text-slate-500">How the assistant is configured and what it is allowed to do</p>
       </div>
 
-      <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 items-stretch gap-4 @7xl:grid-cols-2">
         {loadState === "ready" && settings ? (
           <>
             <AutonomyCard s={settings} index={0} />
@@ -706,7 +706,7 @@ export function SettingsView({ onReset }: { onReset: () => void }) {
             <OperatorsCard s={settings} index={4} />
           </>
         ) : loadState === "error" ? (
-          <div className="fade-up flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white/60 py-16 text-center xl:col-span-2">
+          <div className="fade-up flex flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white/60 py-16 text-center @7xl:col-span-2">
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-red-500">
               <CircleAlert className="h-5 w-5" aria-hidden="true" />
             </span>
@@ -727,7 +727,7 @@ export function SettingsView({ onReset }: { onReset: () => void }) {
           <>
             <SkeletonCard section="autonomy" index={0} rows={5} />
             <SkeletonCard section="policy" index={1} rows={5} />
-            <SkeletonCard section="tools" index={2} rows={4} className="xl:col-span-2" />
+            <SkeletonCard section="tools" index={2} rows={4} className="@7xl:col-span-2" />
             <SkeletonCard section="integrations" index={3} rows={3} />
             <SkeletonCard section="operators" index={4} rows={3} />
           </>
@@ -739,7 +739,7 @@ export function SettingsView({ onReset }: { onReset: () => void }) {
           icon={TriangleAlert}
           tone="red"
           index={5}
-          className="xl:col-span-2"
+          className="@7xl:col-span-2"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="max-w-2xl text-[12px] leading-snug text-slate-600">

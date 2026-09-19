@@ -1,4 +1,5 @@
 import type { AgentContext } from '@edgeone/types';
+import { withLocalFallbackStore } from "../_local-store";
 /**
  * Document Upload Agent — handles document upload for the after-sales knowledge base.
  *
@@ -82,7 +83,8 @@ Output STRICT JSON only (no other text):
   };
 }
 
-export async function onRequest(context: AgentContext) {
+export async function onRequest(rawContext: AgentContext) {
+  const context = withLocalFallbackStore(rawContext); // dev-only in-memory fallback; no-op when deployed
   const { request } = context;
   const env = context.env ?? {};
   const body = (request?.body ?? {}) as Record<string, any>;

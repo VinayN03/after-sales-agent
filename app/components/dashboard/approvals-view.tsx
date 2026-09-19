@@ -58,7 +58,7 @@ export function ApprovalsView({
           <div className="mt-1 text-[13px] text-slate-400">Ask the agent to process a refund from Home or Conversations.</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 @3xl:grid-cols-2 @7xl:grid-cols-3">
           {shown.map((c, i) => (
             <div key={c.caseId} className="fade-up" style={{ "--i": i } as React.CSSProperties}>
               <CaseCard initial={c} conversationId={conversationId} onDecided={onDecided} fullWidth />

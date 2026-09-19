@@ -342,7 +342,7 @@ function KpiCard({ kpi, index }: { kpi: Kpi; index: number }) {
   const { Icon } = kpi;
   return (
     <div
-      className={`${CARD} fade-up ${index === 4 ? "col-span-2 md:col-span-1" : ""}`}
+      className={`${CARD} fade-up ${index === 4 ? "col-span-2 @3xl:col-span-1" : ""}`}
       style={stagger(index)}
     >
       <div className="flex items-center gap-2">
@@ -466,13 +466,13 @@ function Dashboard({ stats }: { stats: Stats }) {
 
   return (
     <>
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-4 grid grid-cols-2 gap-3 @3xl:grid-cols-3 @7xl:grid-cols-5">
         {kpis.map((k, i) => (
           <KpiCard key={k.label} kpi={k} index={i + 1} />
         ))}
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 @3xl:grid-cols-2 xl:grid-cols-3">
         <Card title="Approval route" subtitle="Where the decision layer sent each case" index={6}>
           <div role="group" aria-label={`Approval route distribution: ${routeSummary}`}>
             <BarList label="Cases per approval route" rows={routeRows} grown={grown} />
@@ -582,7 +582,7 @@ function Dashboard({ stats }: { stats: Stats }) {
               : "Latency and denials for every tool the agents call"
           }
           index={12}
-          className="md:col-span-2 xl:col-span-3"
+          className="@3xl:col-span-2 @7xl:col-span-3"
         >
           {shownTools.length === 0 ? (
             <EmptyNote>
@@ -655,16 +655,16 @@ function Dashboard({ stats }: { stats: Stats }) {
 function Skeleton() {
   return (
     <div aria-busy="true" aria-label="Loading analytics" className="animate-pulse">
-      <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-4 grid grid-cols-2 gap-3 @3xl:grid-cols-3 @7xl:grid-cols-5">
         {[0, 1, 2, 3, 4].map(i => (
-          <div key={i} className={`${CARD} ${i === 4 ? "col-span-2 md:col-span-1" : ""}`}>
+          <div key={i} className={`${CARD} ${i === 4 ? "col-span-2 @3xl:col-span-1" : ""}`}>
             <div className="h-7 w-24 rounded-lg bg-slate-100" />
             <div className="mt-3 h-7 w-20 rounded-md bg-slate-100" />
             <div className="mt-2 h-3 w-32 rounded bg-slate-100" />
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 @3xl:grid-cols-2 xl:grid-cols-3">
         {[0, 1, 2].map(i => (
           <div key={i} className={`${CARD} h-[188px]`}>
             <div className="h-3.5 w-28 rounded bg-slate-100" />
