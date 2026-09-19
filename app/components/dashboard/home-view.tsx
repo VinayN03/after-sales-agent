@@ -29,9 +29,12 @@ interface Props {
   onAsk: (text: string) => void;
   onOpenApprovals: () => void;
   onOpenKnowledge: () => void;
+  /** True while the chat dock is open: Home is then only half the screen, so it stacks into one column. */
+  split?: boolean;
+  onFocusChat?: () => void;
 }
 
-export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledge }: Props) {
+export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledge, split = false, onFocusChat }: Props) {
   const [text, setText] = useState("");
   const [today, setToday] = useState("");
   useEffect(() => {
@@ -54,7 +57,9 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
   };
 
   return (
-    <div className="mx-auto flex min-h-full max-w-[1400px] flex-col px-6 pb-4">
+    // Full width: a definite height so the three panels share the remaining space and scroll inside themselves.
+    // Split (chat open): natural height — the left half simply scrolls.
+    <div className={`mx-auto flex max-w-[1400px] flex-col px-6 pb-4 ${split ? "min-h-full" : "h-full min-h-[560px]"}`}>
       {/* Hero */}
       <section className="pb-3 pt-1 text-center">
         <h2 className="text-[26px] font-bold tracking-tight text-slate-900">Resolve customer issues.</h2>
@@ -66,6 +71,8 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === "Enter" && submit()}
+            onFocus={() => onFocusChat?.()}
+            onClick={() => onFocusChat?.()}
             placeholder="How can I help a customer today?"
             className="min-w-0 flex-1 bg-transparent py-1.5 text-[14px] text-slate-800 outline-none placeholder:text-slate-400"
           />
@@ -113,7 +120,7 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className={`grid gap-3 ${split ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"}`}>
           <Kpi icon={MessageSquare} tint="bg-indigo-50 text-indigo-500" i={0} label="Open conversations" value={String(BASELINE.open + pending.length)}
             delta="20%" up={false} good stroke="#6366f1" points={[6, 8, 5, 9, 7, 8, 6, 7, 5, 6]} sub="vs. yesterday" />
           <Kpi icon={Users} tint="bg-orange-50 text-orange-500" i={1} label="Pending approvals" value={String(pending.length)}
@@ -126,7 +133,11 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
       </section>
 
       {/* Cases · Activity · Quick actions — fills the remaining height; each panel scrolls inside itself */}
-      <section className="mt-3 grid flex-1 grid-cols-1 gap-3 xl:min-h-[230px] xl:grid-cols-[minmax(0,1fr)_260px_230px] xl:grid-rows-[minmax(0,1fr)]">
+      <section
+        className={`mt-3 grid gap-3 ${
+          split ? "grid-cols-1" : "flex-1 grid-cols-1 xl:min-h-[230px] xl:grid-cols-[minmax(0,1fr)_260px_230px] xl:grid-rows-[minmax(0,1fr)]"
+        }`}
+      >
         <Card i={3}>
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-2.5">

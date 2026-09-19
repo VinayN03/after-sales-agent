@@ -48,7 +48,7 @@ function MarkdownBlock({ content }: { content: string }) {
  * variant "operator" (dashboard): shows the live agent timeline and the full case card with approval controls.
  * variant "customer" (embeddable widget): hides agent internals and approval controls.
  */
-export function ChatPanel({ pendingSend, variant = "operator" }: { pendingSend?: { id: number; text: string } | null; variant?: "operator" | "customer" }) {
+export function ChatPanel({ pendingSend, variant = "operator", focusSignal }: { pendingSend?: { id: number; text: string } | null; variant?: "operator" | "customer"; focusSignal?: number }) {
   const { t, locale } = useT();
 
   // Initial welcome message — recompute when locale changes
@@ -78,6 +78,13 @@ export function ChatPanel({ pendingSend, variant = "operator" }: { pendingSend?:
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isComposingRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // The dashboard bumps focusSignal when the user clicks the home prompt: focus once the dock has finished sliding in.
+  useEffect(() => {
+    if (!focusSignal) return;
+    const timer = setTimeout(() => textareaRef.current?.focus(), 320);
+    return () => clearTimeout(timer);
+  }, [focusSignal]);
   const conversationId = useMemo(() => {
     const KEY = "after-sales-conversation-id";
     try {
@@ -417,6 +424,7 @@ export function ChatPanel({ pendingSend, variant = "operator" }: { pendingSend?:
         <div className="flex gap-2.5 items-end max-w-2xl mx-auto">
           <div className="flex-1 relative">
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onCompositionStart={() => { isComposingRef.current = true; }}

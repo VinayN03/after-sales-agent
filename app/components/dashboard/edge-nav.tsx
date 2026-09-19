@@ -23,11 +23,13 @@ const ITEMS: Array<{ id: View | "knowledge"; label: string; icon: LucideIcon }> 
 export function EdgeNav({
   view,
   knowledgeOpen,
+  chatOpen = false,
   onNavigate,
   onToggleKnowledge,
 }: {
   view: View;
   knowledgeOpen: boolean;
+  chatOpen?: boolean;
   onNavigate: (v: View) => void;
   onToggleKnowledge: () => void;
 }) {
@@ -58,7 +60,7 @@ export function EdgeNav({
       >
         <div className="flex flex-col gap-0.5">
           {ITEMS.map(({ id, label, icon: Icon }) => {
-            const active = id === "knowledge" ? knowledgeOpen : id === view;
+            const active = id === "knowledge" ? knowledgeOpen : id === "conversations" ? chatOpen : id === view;
             return (
               <button
                 key={id}

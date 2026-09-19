@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 import { ChatPanel } from "./components/chat-panel";
 import { ManagePanel } from "./components/manage-panel";
 import { EdgeNav, type View } from "./components/dashboard/edge-nav";
@@ -8,6 +9,10 @@ import { TopBar } from "./components/dashboard/top-bar";
 import { HomeView } from "./components/dashboard/home-view";
 import { ApprovalsView } from "./components/dashboard/approvals-view";
 import { useCases } from "./components/dashboard/use-cases";
+import { CustomersView } from "./components/dashboard/customers-view";
+import { OrdersView } from "./components/dashboard/orders-view";
+import { AnalyticsView } from "./components/dashboard/analytics-view";
+import { SettingsView } from "./components/dashboard/settings-view";
 import { useT } from "../lib/i18n";
 
 interface HealthStatus {
@@ -16,7 +21,7 @@ interface HealthStatus {
   missing: string[];
 }
 
-const PLACEHOLDER_VIEWS: View[] = ["customers", "orders", "analytics", "settings"];
+const VALID_VIEWS: View[] = ["home", "conversations", "approvals", "customers", "orders", "analytics", "settings"];
 
 export default function Home() {
   const { t, locale, setLocale } = useT();
@@ -27,6 +32,9 @@ export default function Home() {
   const [isResetting, setIsResetting] = useState(false);
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [pendingSend, setPendingSend] = useState<{ id: number; text: string } | null>(null);
+  // Chat dock: splits the screen on Home, slides over the other screens. The panel stays mounted so the conversation persists.
+  const [chatOpen, setChatOpen] = useState(false);
+  const [focusChat, setFocusChat] = useState(0);
   const { cases, loaded, refresh } = useCases();
   const pendingCount = cases.filter(c => c.status === "pending_approval").length;
 
@@ -40,7 +48,8 @@ export default function Home() {
   // Deep links: /#approvals, /#conversations … (and the current view is kept in the URL hash).
   useEffect(() => {
     const fromHash = window.location.hash.replace("#", "") as View;
-    if (["home", "conversations", "approvals", ...PLACEHOLDER_VIEWS].includes(fromHash)) setView(fromHash);
+    if (fromHash === "conversations") setChatOpen(true);
+    else if (VALID_VIEWS.includes(fromHash)) setView(fromHash);
   }, []);
   useEffect(() => {
     window.history.replaceState(null, "", view === "home" ? window.location.pathname : `#${view}`);
@@ -48,10 +57,25 @@ export default function Home() {
 
   const showWarning = health && !health.ok;
 
-  /** Open the conversation view; a non-empty prompt is sent to the agent straight away. */
+  /** Open the chat dock and focus its input. */
+  const openChat = () => {
+    setChatOpen(true);
+    setFocusChat(n => n + 1);
+  };
+
+  /** Open the chat dock; a non-empty prompt is sent to the agent straight away. */
   const handleAsk = (text: string) => {
-    setView("conversations");
-    if (text.trim()) setPendingSend({ id: Date.now(), text });
+    if (text.trim()) {
+      setChatOpen(true);
+      setPendingSend({ id: Date.now(), text });
+    } else {
+      openChat();
+    }
+  };
+
+  const handleNavigate = (v: View) => {
+    if (v === "conversations") openChat();
+    else setView(v);
   };
 
   const handleReset = async () => {
@@ -106,7 +130,8 @@ export default function Home() {
       <EdgeNav
         view={view}
         knowledgeOpen={showManage}
-        onNavigate={setView}
+        chatOpen={chatOpen}
+        onNavigate={handleNavigate}
         onToggleKnowledge={() => setShowManage(v => !v)}
       />
 
@@ -139,7 +164,8 @@ export default function Home() {
           onOpenApprovals={() => setView("approvals")}
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        <div className="min-w-0 flex-1 overflow-y-auto">
           {view === "home" && (
             <HomeView
               cases={cases}
@@ -147,26 +173,55 @@ export default function Home() {
               onAsk={handleAsk}
               onOpenApprovals={() => setView("approvals")}
               onOpenKnowledge={() => setShowManage(true)}
+              split={chatOpen}
+              onFocusChat={openChat}
             />
           )}
           {view === "approvals" && (
             <ApprovalsView cases={cases} loaded={loaded} onDecided={refresh} onBack={() => setView("home")} />
           )}
-          {PLACEHOLDER_VIEWS.includes(view) && (
-            <div className="flex h-full items-center justify-center pb-24">
-              <div className="text-center">
-                <div className="text-[18px] font-semibold capitalize text-slate-700">{view}</div>
-                <div className="mt-1 text-[13px] text-slate-400">Coming soon</div>
-              </div>
-            </div>
-          )}
+          {view === "customers" && <CustomersView onOpenApprovals={() => setView("approvals")} />}
+          {view === "orders" && <OrdersView onAsk={handleAsk} onOpenApprovals={() => setView("approvals")} />}
+          {view === "analytics" && <AnalyticsView cases={cases} loaded={loaded} />}
+          {view === "settings" && <SettingsView onReset={() => setShowResetModal(true)} />}
 
-          {/* Kept mounted (hidden when inactive) so the conversation survives switching views. */}
-          <div className={view === "conversations" ? "h-full px-6 pb-4" : "hidden"}>
-            <div className="h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_1px_3px_rgba(16,24,40,0.04)]">
-              <ChatPanel key={resetVersion} pendingSend={pendingSend} />
+        </div>
+
+        {/* Chat dock — on Home it takes the right half and the dashboard reflows into the left half;
+            on other screens it slides over them (so tables aren't squeezed). Always mounted. */}
+        <aside
+          aria-label="Chat"
+          inert={!chatOpen}
+          className={`overflow-hidden border-slate-200/80 bg-white [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] ${
+            view === "home"
+              ? `relative flex-shrink-0 transition-[width] duration-300 ${chatOpen ? "w-1/2 border-l" : "w-0"}`
+              : `absolute inset-y-0 right-0 z-30 w-1/2 min-w-[360px] border-l transition-transform duration-300 ${
+                  chatOpen ? "translate-x-0 shadow-[-12px_0_32px_rgba(15,23,42,0.12)]" : "translate-x-full"
+                }`
+          }`}
+        >
+          <div className="flex h-full min-w-[360px] flex-col">
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-100 px-4 py-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 text-[11px] font-bold text-white">AI</div>
+                <div className="leading-tight">
+                  <div className="text-[13px] font-semibold text-slate-900">Assistant</div>
+                  <div className="text-[11px] text-slate-400">Specialist agents work each case live</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setChatOpen(false)}
+                aria-label="Close chat"
+                className="press rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              <ChatPanel key={resetVersion} pendingSend={pendingSend} focusSignal={focusChat} />
             </div>
           </div>
+        </aside>
         </div>
       </div>
 

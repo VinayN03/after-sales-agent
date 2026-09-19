@@ -43,6 +43,8 @@ The **Policy** and **Risk** agents run in a **FastAPI** service ([cloud-function
 ### Interaction interfaces
 
 - **Embeddable chat widget** — add one line to any website: `<script src="https://YOUR-SITE/embed.js" async></script>`. It adds a floating launcher and loads the chat (`/widget`) in an isolated iframe. The customer view hides agent internals and approval controls, and shows a read-only case card that updates live when a human decides. See it on a mock third-party storefront at `/embed-demo`.
+- **Split-screen chat** — click the prompt on Home and the screen splits: the dashboard reflows into the left half and the live chat opens on the right. On other screens the same chat slides over as a drawer.
+- **Pre-seeded demo data** — a fresh deployment loads 10 customers, 19 orders and 9 historical cases produced by the real pipeline (every approval route represented), so every screen — dashboard, approvals, customers, orders, analytics, settings — is populated from the first load. Seeding runs with the model off, so it costs no tokens; Reset re-seeds.
 - **Streaming** — `/chat` streams over SSE: each agent appears live as it works, and replies stream in.
 - **Interruption** — the Stop button aborts the run server-side. Every side effect (saving a case, executing a refund) is guarded by an abort check, and autonomous actions get a visible 2-second "executing in 2s — press Stop to cancel" window before money moves.
 - **Human-in-the-loop** — proposals wait in an Approvals inbox; support-level and manager-level approvals are enforced server-side per case.

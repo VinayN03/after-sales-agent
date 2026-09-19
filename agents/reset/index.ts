@@ -84,6 +84,7 @@ export async function onRequest(rawContext: AgentContext) {
       kv.delete(DOCUMENT_MANIFEST_NAMESPACE, "all"),
       kv.delete(ORDER_MANIFEST_NAMESPACE, "all"),
       kv.delete(["aftersales", "cases_manifest"], "all"),
+      kv.delete(["aftersales", "meta"], "seeded"), // re-seed the historical demo cases on the next load
     ]);
 
     return jsonResponse({

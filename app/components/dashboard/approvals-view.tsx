@@ -36,12 +36,12 @@ export function ApprovalsView({
             The agents propose; a human decides. Use the role switch on a case to see the permission boundary — manager-level cases can&apos;t be approved as a support agent. Roles are verified server-side with operator passcodes (demo: support-demo / manager-demo).
           </p>
         </div>
-        <div className="flex rounded-xl border border-slate-200 bg-white p-0.5 text-[12px] font-medium">
+        <div className="flex flex-shrink-0 rounded-xl border border-slate-200 bg-white p-0.5 text-[12px] font-medium">
           {([["pending", `Pending (${pending.length})`], ["history", `History (${history.length})`]] as const).map(([id, label]) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`press rounded-md px-3 py-1 ${tab === id ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
+              className={`press whitespace-nowrap rounded-md px-3 py-1 ${tab === id ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
             >
               {label}
             </button>
