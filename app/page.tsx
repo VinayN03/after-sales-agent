@@ -5,7 +5,6 @@ import { MessageSquare, X } from "lucide-react";
 import { ChatPanel } from "./components/chat-panel";
 import { ManagePanel } from "./components/manage-panel";
 import { EdgeNav, type View } from "./components/dashboard/edge-nav";
-import { Sidebar } from "./components/dashboard/sidebar";
 import { TopBar } from "./components/dashboard/top-bar";
 import { HomeView } from "./components/dashboard/home-view";
 import { ApprovalsView } from "./components/dashboard/approvals-view";
@@ -141,26 +140,17 @@ export default function Home() {
 
   return (
     <main className="flex h-screen bg-[#F6F7FB]">
-      {sidebarOpen ? (
-        <Sidebar
-          view={view}
-          chatOpen={chatOpen}
-          knowledgeOpen={showManage}
-          pending={pendingCount}
-          onNavigate={handleNavigate}
-          onToggleKnowledge={() => setShowManage(v => !v)}
-          onHide={() => setSidebar(false)}
-        />
-      ) : (
-        <EdgeNav
-          view={view}
-          knowledgeOpen={showManage}
-          chatOpen={chatOpen}
-          onNavigate={handleNavigate}
-          onToggleKnowledge={() => setShowManage(v => !v)}
-          onShowSidebar={() => setSidebar(true)}
-        />
-      )}
+      <EdgeNav
+        view={view}
+        knowledgeOpen={showManage}
+        chatOpen={chatOpen}
+        pending={pendingCount}
+        docked={sidebarOpen}
+        onNavigate={handleNavigate}
+        onToggleKnowledge={() => setShowManage(v => !v)}
+        onDock={() => setSidebar(true)}
+        onUndock={() => setSidebar(false)}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Env config warning banner */}
