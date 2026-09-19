@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChatPanel } from "./components/chat-panel";
 import { ManagePanel } from "./components/manage-panel";
-import { Sidebar, type View } from "./components/dashboard/sidebar";
+import { EdgeNav, type View } from "./components/dashboard/edge-nav";
 import { TopBar } from "./components/dashboard/top-bar";
 import { HomeView } from "./components/dashboard/home-view";
 import { ApprovalsView } from "./components/dashboard/approvals-view";
@@ -95,7 +95,7 @@ export default function Home() {
 
   return (
     <main className="flex h-screen bg-[#F6F7FB]">
-      <Sidebar
+      <EdgeNav
         view={view}
         knowledgeOpen={showManage}
         onNavigate={setView}

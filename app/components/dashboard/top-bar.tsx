@@ -19,9 +19,14 @@ export function TopBar({
 }) {
   return (
     <header className="flex flex-shrink-0 items-center justify-between px-6 pb-1 pt-3">
-      <div>
-        <h1 className="text-[17px] font-semibold leading-tight text-slate-900">After-Sales Agent</h1>
-        <p className="text-[12px] text-slate-500">Resolve faster. Happier customers.</p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-base font-bold text-white shadow-sm">
+          A
+        </div>
+        <div>
+          <h1 className="text-[17px] font-semibold leading-tight text-slate-900">After-Sales Agent</h1>
+          <p className="text-[12px] text-slate-500">Resolve faster. Happier customers.</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-3">
