@@ -5,6 +5,7 @@ import { marked } from "marked";
 import { OrderCard } from "./cards/order-card";
 import { RefundCard } from "./cards/refund-card";
 import { CaseCard } from "./cards/case-card";
+import { CustomerCaseCard } from "./cards/customer-case-card";
 import { AgentTimeline } from "./agent-timeline";
 import type { AgentEvent } from "../../agents/_agents/types";
 import { ExchangeCard } from "./cards/exchange-card";
@@ -43,7 +44,11 @@ function MarkdownBlock({ content }: { content: string }) {
 
 // ============ Component ============
 
-export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: string } | null }) {
+/**
+ * variant "operator" (dashboard): shows the live agent timeline and the full case card with approval controls.
+ * variant "customer" (embeddable widget): hides agent internals and approval controls.
+ */
+export function ChatPanel({ pendingSend, variant = "operator" }: { pendingSend?: { id: number; text: string } | null; variant?: "operator" | "customer" }) {
   const { t, locale } = useT();
 
   // Initial welcome message — recompute when locale changes
@@ -307,7 +312,9 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
     switch (card.type) {
       case "order_detail": return <OrderCard key={idx} order={card.data.order} />;
       case "refund_progress": return <RefundCard key={idx} order={card.data.order} />;
-      case "case": return <CaseCard key={idx} initial={card.data.case} conversationId={conversationId} />;
+      case "case": return variant === "customer"
+        ? <CustomerCaseCard key={idx} initial={card.data.case} conversationId={conversationId} />
+        : <CaseCard key={idx} initial={card.data.case} conversationId={conversationId} />;
       case "exchange_confirm": return <ExchangeCard key={idx} order={card.data.order} />;
       case "faq_sources": return <FaqCard key={idx} sources={card.data.sources} />;
       default: return null;
@@ -323,7 +330,7 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
             {msg.role !== "user" && (
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mr-2.5 mt-0.5 shadow-sm">AI</div>
             )}
-            <div className={`max-w-[75%] ${msg.role === "user"
+            <div className={`${variant === "customer" ? "max-w-[92%]" : "max-w-[75%]"} ${msg.role === "user"
               ? "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl rounded-br-sm px-4 py-2.5 shadow-sm"
               : "space-y-2.5"
             }`}>
@@ -331,7 +338,7 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
                 <p className="text-[13px] whitespace-pre-wrap leading-relaxed">{msg.content}</p>
               ) : (
                 <>
-                  {msg.agentEvents && msg.agentEvents.length > 0 && <AgentTimeline events={msg.agentEvents} />}
+                  {variant === "operator" && msg.agentEvents && msg.agentEvents.length > 0 && <AgentTimeline events={msg.agentEvents} />}
                   {msg.content ? (
                     <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-gray-100/80">
                       <div className="text-[13px] prose-chat max-w-none text-gray-700 leading-relaxed">
@@ -347,7 +354,7 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
                             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "150ms" }} />
                             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style={{ animationDelay: "300ms" }} />
                           </div>
-                          <span className="text-[12px] text-gray-400">{currentStep}</span>
+                          <span className="text-[12px] text-gray-400">{variant === "customer" ? "Working on your request…" : currentStep}</span>
                         </div>
                       </div>
                     )

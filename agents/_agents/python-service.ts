@@ -29,7 +29,7 @@ function baseUrl(context: AgentContext, env: AgentEnv): string | null {
   return host ? `${headers["x-forwarded-proto"] ?? "https"}://${host}/api` : null;
 }
 
-export async function callPython<T>(context: AgentContext, env: AgentEnv, path: string, body: unknown): Promise<T | null> {
+export async function callPython<T>(context: AgentContext, env: AgentEnv, path: string, body: unknown, signal?: AbortSignal): Promise<T | null> {
   if (Date.now() < downUntil) return null;
   const base = baseUrl(context, env);
   if (!base) return null;
@@ -38,11 +38,12 @@ export async function callPython<T>(context: AgentContext, env: AgentEnv, path: 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: signal ? AbortSignal.any([AbortSignal.timeout(TIMEOUT_MS), signal]) : AbortSignal.timeout(TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as T;
   } catch (e) {
+    if (signal?.aborted) return null; // the user stopped the run — that's not the service being down
     downUntil = Date.now() + COOLDOWN_MS;
     logger.error(`Python service ${path} unavailable (${(e as Error).message}); using TypeScript fallback`);
     return null;

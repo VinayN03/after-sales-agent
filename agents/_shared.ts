@@ -50,7 +50,7 @@ export function sseEvent(data: Record<string, unknown>): string {
   return `data: ${JSON.stringify(data)}\n\n`;
 }
 
-export function createSSEResponse(generator: AsyncGenerator<string>, signal?: AbortSignal): Response {
+export function createSSEResponse(generator: AsyncGenerator<string>, signal?: AbortSignal, onCancel?: () => void): Response {
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
@@ -72,7 +72,8 @@ export function createSSEResponse(generator: AsyncGenerator<string>, signal?: Ab
         controller.close();
       }
     },
-    cancel() {},
+    // The client went away (closed the tab, dropped the connection): let the caller abort the run.
+    cancel() { onCancel?.(); },
   });
 
   return new Response(readable, {

@@ -21,6 +21,16 @@ type AgentEnv = Record<string, string | undefined>;
 type Writer = (e: Record<string, unknown>) => void;
 
 const PACE_MS = 350; // short pause between agent waves so the timeline is readable live
+const AUTONOMY_GRACE_MS = 2000; // window to press Stop before an autonomous action executes
+
+/**
+ * Interruption guard. Called before every side effect (saving a case, executing a refund) so a
+ * user pressing Stop — or dropping the connection — guarantees nothing is executed or recorded
+ * afterwards. Once execution has *started* it runs to completion, so an order is never left half-processed.
+ */
+function checkpoint(signal?: AbortSignal) {
+  if (signal?.aborted) throw new DOMException("Run interrupted by the user", "AbortError");
+}
 
 export async function runRefundPipeline(args: {
   order: Order;
@@ -81,6 +91,7 @@ export async function runRefundPipeline(args: {
     ]);
 
   // ── Wave 2: Policy ‖ Risk ──
+  checkpoint(signal);
   emit("policy", "running", "Policy Agent", "Checking return eligibility…");
   emit("risk", "running", "Risk Agent", "Scanning for fraud patterns…");
   // Both run in the Python/FastAPI service in parallel; each falls back to the TypeScript rules if
@@ -91,7 +102,7 @@ export async function runRefundPipeline(args: {
       delivered_days: deliveredAge,
       item_text: order.items.map(i => `${i.name} ${i.specs}`).join(" "),
       issue,
-    }),
+    }, signal),
     callPython<RiskResult>(context, env, "/risk", {
       refunds_90d: customer.refunds90d,
       damage_claims_90d: customer.damageClaims90d,
@@ -99,7 +110,7 @@ export async function runRefundPipeline(args: {
       address_mismatch: customer.addressMismatch,
       member_since_days: customer.memberSinceDays,
       order_total: order.totalAmount,
-    }),
+    }, signal),
   ]);
   const policy = pyPolicy && typeof pyPolicy.eligible === "boolean" && Array.isArray(pyPolicy.checks) ? pyPolicy : evaluatePolicy(order, issue);
   const risk = pyRisk && typeof pyRisk.score === "number" && Array.isArray(pyRisk.flags) ? pyRisk : assessRisk(customer, order);
@@ -116,6 +127,7 @@ export async function runRefundPipeline(args: {
   await pace();
 
   // ── Resolution (LLM) ──
+  checkpoint(signal); // don't spend a model call on a run the user has already stopped
   c.resolution = null;
   if (policy.eligible) {
     emit("resolution", "running", "Resolution Agent", "Weighing refund, replacement or store credit…");
@@ -130,12 +142,14 @@ export async function runRefundPipeline(args: {
   await pace();
 
   // ── Decision engine + approval layer (deterministic) ──
+  checkpoint(signal);
   const decision = decide(order.totalAmount, policy, risk);
   c.decision = decision;
   const approverLabel = decision.approver === "manager" ? "manager" : "support-agent";
 
   if (decision.route === "denied") {
     emit("approval", "blocked", "Approval Layer", "Denied by policy — no approval path", decision.rationale);
+    checkpoint(signal);
     await closeCase(context, env, c, order, emit, "denied");
     return {
       currentOrder: order,
@@ -146,8 +160,11 @@ export async function runRefundPipeline(args: {
   }
 
   if (decision.route === "autonomous") {
+    // Grace window: the operator sees "executing in 2s" and can press Stop before any money moves.
+    emit("approval", "warn", "Approval Layer", `Auto-approved — executing in ${AUTONOMY_GRACE_MS / 1000}s. Press Stop to cancel.`, decision.rationale);
+    if (writer) await new Promise(r => setTimeout(r, AUTONOMY_GRACE_MS));
+    checkpoint(signal); // last chance to stop before money moves
     emit("approval", "done", "Approval Layer", "Auto-approved — within the agent's autonomy limit", decision.rationale);
-    await pace();
     const updated = await executeCase(context, env, c, order, emit);
     return {
       currentOrder: updated,
@@ -157,6 +174,7 @@ export async function runRefundPipeline(args: {
     };
   }
 
+  checkpoint(signal); // don't queue a case for approval if the user stopped the run
   emit("approval", "warn", "Approval Layer",
     decision.route === "blocked"
       ? "Escalated to manager — automatic handling disabled"

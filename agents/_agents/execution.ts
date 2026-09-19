@@ -12,6 +12,7 @@ import { money } from "./specialists";
 import type { AgentEvent, AgentName, Case, Comms, EventStatus } from "./types";
 
 const logger = createLogger("execution");
+const COMMS_TIMEOUT_MS = 6000;
 type AgentEnv = Record<string, string | undefined>;
 type Writer = (e: Record<string, unknown>) => void;
 
@@ -109,7 +110,7 @@ Be warm and concise. Use only the facts provided — do not invent amounts, date
         whatWasDone: c.execution,
         tier: c.customer.tier,
       })),
-    ]);
+    ], { signal: AbortSignal.timeout(COMMS_TIMEOUT_MS) }); // slow model → fall back to the template
     const text = typeof response.content === "string" ? response.content : "";
     const p = JSON.parse(text.match(/\{[\s\S]*\}/)![0]);
     if (!p.chat || !p.emailBody || !p.sms) throw new Error("incomplete comms JSON");

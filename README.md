@@ -40,6 +40,13 @@ Thresholds live in [agents/_agents/decision.ts](agents/_agents/decision.ts), not
 
 The **Policy** and **Risk** agents run in a **FastAPI** service ([cloud-functions/api/index.py](cloud-functions/api/index.py), deployed as an EdgeOne Makers Python cloud function under `/api`), using pydantic for validation and numpy for the weighted risk score. The TypeScript orchestrator calls both endpoints **in parallel**; if the service is slow, cold or down, it falls back to equivalent TypeScript rules, so a case is never blocked. Each agent's timeline row says which engine answered. `npm run test:parity` proves the two implementations agree (48 checks across every demo order and edge case).
 
+### Interaction interfaces
+
+- **Embeddable chat widget** — add one line to any website: `<script src="https://YOUR-SITE/embed.js" async></script>`. It adds a floating launcher and loads the chat (`/widget`) in an isolated iframe. The customer view hides agent internals and approval controls, and shows a read-only case card that updates live when a human decides. See it on a mock third-party storefront at `/embed-demo`.
+- **Streaming** — `/chat` streams over SSE: each agent appears live as it works, and replies stream in.
+- **Interruption** — the Stop button aborts the run server-side. Every side effect (saving a case, executing a refund) is guarded by an abort check, and autonomous actions get a visible 2-second "executing in 2s — press Stop to cancel" window before money moves.
+- **Human-in-the-loop** — proposals wait in an Approvals inbox; support-level and manager-level approvals are enforced server-side per case.
+
 ### Safety properties
 
 - **Permission boundary** — a manager-only case rejects a support-role approval with `403`.

@@ -221,9 +221,14 @@ export async function onRequest(rawContext: AgentContext) {
 
   logger.log(`Chat (${locale}): "${(message as string).slice(0, 80)}..."`);
 
-  const signal = request?.signal as AbortSignal | undefined;
-  const generator = streamAfterSales(message, context, pendingAction ?? null, locale, signal);
-  return createSSEResponse(generator, signal);
+  // One abort signal for the whole run, fed by both the platform's /stop and a dropped client
+  // connection — so either way the pipeline stops before it executes anything.
+  const controller = new AbortController();
+  const upstream = request?.signal as AbortSignal | undefined;
+  if (upstream?.aborted) controller.abort();
+  else upstream?.addEventListener("abort", () => controller.abort(), { once: true });
+  const generator = streamAfterSales(message, context, pendingAction ?? null, locale, controller.signal);
+  return createSSEResponse(generator, controller.signal, () => controller.abort());
 }
 
 // ─── Smart Suggestions (locale-aware) ───
