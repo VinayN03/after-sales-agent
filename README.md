@@ -3,6 +3,8 @@
 **A multi-agent after-sales teammate that knows when *not* to act on its own.**
 Built for **The Executable World** hackathon — **Track 1: AI Assistants** — on **Tencent EdgeOne Makers** (LangGraph, TypeScript).
 
+**Team: The Two Vinay's** — Vinay Kumar Namadi (captain) and Vinay Kumar Godavarti.
+
 A customer messages the assistant. An orchestrator delegates to specialist agents, you watch each one work live, a deterministic decision engine picks the approval route, and nothing touches money until the right human signs off. Every step lands in an audit trail.
 
 ```
