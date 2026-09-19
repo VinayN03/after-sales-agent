@@ -36,6 +36,10 @@ Customer message
 
 Thresholds live in [agents/_agents/decision.ts](agents/_agents/decision.ts), not in a prompt.
 
+### Python / FastAPI service
+
+The **Policy** and **Risk** agents run in a **FastAPI** service ([cloud-functions/api/index.py](cloud-functions/api/index.py), deployed as an EdgeOne Makers Python cloud function under `/api`), using pydantic for validation and numpy for the weighted risk score. The TypeScript orchestrator calls both endpoints **in parallel**; if the service is slow, cold or down, it falls back to equivalent TypeScript rules, so a case is never blocked. Each agent's timeline row says which engine answered. `npm run test:parity` proves the two implementations agree (48 checks across every demo order and edge case).
+
 ### Safety properties
 
 - **Permission boundary** — a manager-only case rejects a support-role approval with `403`.
@@ -73,7 +77,13 @@ If your network can't reach EdgeOne's storage host, add `LOCAL_STORE_FALLBACK=1`
 
 ```bash
 npm test   # 19 offline scenario checks, no model or login needed
+
+# Optional: run the Python service locally and check TypeScript/Python parity
+pip install -r cloud-functions/requirements.txt uvicorn
+(cd cloud-functions/api && uvicorn index:app --port 8001)
+PY_SERVICE_URL=http://127.0.0.1:8001 npm run test:parity
 ```
+Set `PY_SERVICE_URL=http://127.0.0.1:8001` in `.env` to make the local dev server use it (deployed, it is discovered automatically).
 
 Deploy: import this repository into EdgeOne Makers (area: overseas).
 
@@ -91,8 +101,10 @@ agents/
     execution.ts     mock execution APIs · communication (LLM) · audit
     data.ts          mock customers and demo orders
   _graph/          LangGraph intent routing (from the template)
-app/               Next.js UI — agent timeline, case card, chat
-tests/             offline scenario tests
+cloud-functions/
+  api/index.py     Python / FastAPI risk & policy service
+app/               Next.js UI — agent timeline, case card, chat (Plus Jakarta Sans)
+tests/             offline scenario tests + TypeScript/Python parity test
 ```
 
 ## Credits

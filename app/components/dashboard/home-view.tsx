@@ -75,7 +75,7 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
             onClick={submit}
             disabled={!text.trim()}
             aria-label="Send"
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md disabled:cursor-default"
+            className="press flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md disabled:cursor-default"
           >
             <Send className="h-4 w-4" />
           </button>
@@ -86,7 +86,7 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
             <button
               key={label}
               onClick={() => (ask ? onAsk(ask) : onOpenApprovals())}
-              className="flex items-center gap-1.5 rounded-full border border-slate-100 bg-white px-3 py-1.5 text-[12px] font-medium text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:text-indigo-600"
+              className="flex items-center gap-1.5 rounded-full border border-slate-100 bg-white px-3 py-1.5 text-[12px] font-medium text-slate-700 shadow-sm press hover:border-indigo-200 hover:text-indigo-600"
             >
               <Icon className="h-3.5 w-3.5 text-indigo-500" />
               {label}
@@ -114,20 +114,20 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <Kpi icon={MessageSquare} tint="bg-indigo-50 text-indigo-500" label="Open conversations" value={String(BASELINE.open + pending.length)}
+          <Kpi icon={MessageSquare} tint="bg-indigo-50 text-indigo-500" i={0} label="Open conversations" value={String(BASELINE.open + pending.length)}
             delta="20%" up={false} good stroke="#6366f1" points={[6, 8, 5, 9, 7, 8, 6, 7, 5, 6]} sub="vs. yesterday" />
-          <Kpi icon={Users} tint="bg-orange-50 text-orange-500" label="Pending approvals" value={String(pending.length)}
+          <Kpi icon={Users} tint="bg-orange-50 text-orange-500" i={1} label="Pending approvals" value={String(pending.length)}
             delta="50%" up good={false} stroke="#f59e0b" points={[5, 7, 6, 8, 6, 9, 7, 8, 6, 7]} sub="vs. yesterday" onClick={onOpenApprovals} />
-          <Kpi icon={CheckCircle2} tint="bg-emerald-50 text-emerald-500" label="Issues resolved" value={String(BASELINE.resolved + resolved.length)}
+          <Kpi icon={CheckCircle2} tint="bg-emerald-50 text-emerald-500" i={2} label="Issues resolved" value={String(BASELINE.resolved + resolved.length)}
             delta="18%" up good stroke="#10b981" points={[3, 4, 4, 5, 6, 6, 7, 8, 8, 10]} sub="vs. yesterday" />
-          <Kpi icon={Clock} tint="bg-indigo-50 text-indigo-500" label="Avg. resolution time" value="4m 32s"
+          <Kpi icon={Clock} tint="bg-indigo-50 text-indigo-500" i={3} label="Avg. resolution time" value="4m 32s"
             delta="28%" up={false} good stroke="#6366f1" points={[6, 7, 6, 8, 7, 6, 7, 6, 7, 6]} sub="vs. last week" />
         </div>
       </section>
 
       {/* Cases · Activity · Quick actions — fills the remaining height; each panel scrolls inside itself */}
       <section className="mt-3 grid flex-1 grid-cols-1 gap-3 xl:min-h-[230px] xl:grid-cols-[minmax(0,1fr)_260px_230px] xl:grid-rows-[minmax(0,1fr)]">
-        <Card>
+        <Card i={3}>
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-2.5">
               <MessageSquare className="mt-0.5 h-4 w-4 text-slate-700" strokeWidth={1.8} />
@@ -146,7 +146,7 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
               <div className={`sticky top-0 z-10 grid ${COLS} gap-3 border-b border-slate-100 bg-white pb-1.5 text-[11px] font-medium text-slate-400`}>
                 <span>Customer</span><span>Issue</span><span>Order</span><span>Amount</span><span>Status</span><span>AI Confidence</span><span />
               </div>
-              {cases.slice(0, 8).map(c => <CaseRow key={c.caseId} c={c} onOpen={onOpenApprovals} />)}
+              {cases.slice(0, 8).map((c, i) => <CaseRow key={c.caseId} c={c} i={i} onOpen={onOpenApprovals} />)}
               {loaded && cases.length === 0 && (
                 <div className="py-8 text-center text-[12px] text-slate-400">
                   No active cases yet. Ask the agent to handle a refund to see it work.
@@ -156,7 +156,7 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
           </div>
         </Card>
 
-        <Card>
+        <Card i={4}>
           <div className="flex items-start gap-2.5">
             <Zap className="mt-0.5 h-4 w-4 text-slate-700" strokeWidth={1.8} />
             <div>
@@ -165,14 +165,14 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
             </div>
           </div>
           <ol className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-            {activity.map((e, i) => <ActivityRow key={e.agent} e={e} last={i === activity.length - 1} />)}
+            {activity.map((e, i) => <ActivityRow key={e.agent} e={e} i={i} last={i === activity.length - 1} />)}
           </ol>
           {loaded && activity.length === 0 && (
             <div className="py-6 text-center text-[12px] text-slate-400">Agents will appear here as they work on a case.</div>
           )}
         </Card>
 
-        <Card>
+        <Card i={5}>
           <div className="flex items-center gap-2">
             <Diamond className="h-4 w-4 text-slate-700" strokeWidth={1.8} />
             <h3 className="text-[14px] font-semibold text-slate-900">Quick actions</h3>
@@ -196,32 +196,33 @@ export function HomeView({ cases, loaded, onAsk, onOpenApprovals, onOpenKnowledg
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children, i = 0 }: { children: React.ReactNode; i?: number }) {
   return (
-    <div className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_1px_3px_rgba(16,24,40,0.04)]">
+    <div style={{ "--i": i } as React.CSSProperties} className="fade-up flex min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_1px_3px_rgba(16,24,40,0.04)]">
       {children}
     </div>
   );
 }
 
 function Kpi({
-  icon: Icon, tint, label, value, delta, up, good, stroke, points, sub, onClick,
+  icon: Icon, tint, label, value, delta, up, good, stroke, points, sub, onClick, i,
 }: {
-  icon: LucideIcon; tint: string; label: string; value: string; delta: string; up: boolean; good: boolean;
+  i: number; icon: LucideIcon; tint: string; label: string; value: string; delta: string; up: boolean; good: boolean;
   stroke: string; points: number[]; sub: string; onClick?: () => void;
 }) {
   const Arrow = up ? ArrowUp : ArrowDown;
   return (
     <div
       onClick={onClick}
-      className={`relative flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(16,24,40,0.04)] ${onClick ? "cursor-pointer transition-shadow hover:shadow-md" : ""}`}
+      style={{ "--i": i } as React.CSSProperties}
+      className={`fade-up relative flex items-center gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-[0_1px_3px_rgba(16,24,40,0.04)] ${onClick ? "press cursor-pointer hover:shadow-md" : ""}`}
     >
       <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${tint}`}>
         <Icon className="h-5 w-5" strokeWidth={1.8} />
       </div>
       <div className="min-w-0 flex-1">
         <div className="whitespace-nowrap text-[12px] text-slate-600">{label}</div>
-        <div className="whitespace-nowrap text-[22px] font-bold leading-tight text-slate-900">{value}</div>
+        <div className="whitespace-nowrap text-[22px] font-bold leading-tight tabular-nums text-slate-900">{value}</div>
         <div className="flex items-center gap-1.5 whitespace-nowrap text-[11px] leading-tight">
           <span className={`flex items-center font-medium ${good ? "text-emerald-600" : "text-red-500"}`}>
             <Arrow className="h-3 w-3" />{delta}
@@ -236,11 +237,11 @@ function Kpi({
   );
 }
 
-function CaseRow({ c, onOpen }: { c: Case; onOpen: () => void }) {
+function CaseRow({ c, i, onOpen }: { c: Case; i: number; onOpen: () => void }) {
   const status = caseStatus(c);
   const confidence = c.resolution?.confidence;
   return (
-    <div onClick={onOpen} className={`grid cursor-pointer ${COLS} items-center gap-3 border-b border-slate-50 py-2 text-[12px] last:border-0 hover:bg-slate-50/60`}>
+    <div onClick={onOpen} style={{ "--i": i } as React.CSSProperties} className={`fade-up grid cursor-pointer ${COLS} items-center gap-3 border-b border-slate-50 py-2 text-[12px] last:border-0 hover:bg-slate-50/60`}>
       <div className="flex min-w-0 items-center gap-2.5">
         <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[10px] font-semibold text-indigo-600">{initials(c.customer.name)}</div>
         <div className="min-w-0">
@@ -253,14 +254,14 @@ function CaseRow({ c, onOpen }: { c: Case; onOpen: () => void }) {
         <div className="font-semibold text-slate-800">{shortOrder(c.orderId)}</div>
         <div className="text-[10px] text-slate-400">{fmtDate(c.createdAt)}</div>
       </div>
-      <div className="font-medium text-slate-700">{money(c.amount)}</div>
+      <div className="font-medium tabular-nums text-slate-700">{money(c.amount)}</div>
       <div><span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${status.cls}`}>{status.label}</span></div>
       <div className="flex items-center gap-2">
         {confidence != null ? (
           <>
             <span className="w-8 font-medium text-slate-700">{confidence}%</span>
             <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-100">
-              <div className={`h-full rounded-full ${confidence >= 80 ? "bg-emerald-500" : "bg-amber-400"}`} style={{ width: `${confidence}%` }} />
+              <div className={`h-full rounded-full transition-[width] duration-500 ease-out ${confidence >= 80 ? "bg-emerald-500" : "bg-amber-400"}`} style={{ width: `${confidence}%` }} />
             </div>
           </>
         ) : (
@@ -272,14 +273,14 @@ function CaseRow({ c, onOpen }: { c: Case; onOpen: () => void }) {
   );
 }
 
-function ActivityRow({ e, last }: { e: AgentEvent; last: boolean }) {
+function ActivityRow({ e, i, last }: { e: AgentEvent; i: number; last: boolean }) {
   let heading = ACTIVITY_HEADING[e.agent];
   if (e.agent === "approval") {
     heading = e.status === "warn" ? "Waiting for human approval" : e.status === "blocked" ? "Approval declined" : "Approval granted";
   }
   const waiting = e.status === "warn" || e.status === "running";
   return (
-    <li className="grid grid-cols-[16px_50px_minmax(0,1fr)] gap-x-2">
+    <li style={{ "--i": i } as React.CSSProperties} className="fade-up grid grid-cols-[16px_50px_minmax(0,1fr)] gap-x-2">
       <div className="flex flex-col items-center">
         {waiting ? (
           <span className="mt-0.5 h-4 w-4 rounded-full border-2 border-indigo-500 bg-white" />
@@ -301,7 +302,7 @@ function ActivityRow({ e, last }: { e: AgentEvent; last: boolean }) {
 
 function QuickAction({ icon: Icon, tint, title, sub, onClick }: { icon: LucideIcon; tint: string; title: string; sub: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-white p-2 text-left transition-colors hover:border-indigo-200 hover:bg-indigo-50/30">
+    <button onClick={onClick} className="flex w-full items-center gap-2.5 rounded-xl border border-slate-100 bg-white p-2 text-left press hover:border-indigo-200 hover:bg-indigo-50/30">
       <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${tint}`}>
         <Icon className="h-4 w-4" strokeWidth={1.8} />
       </div>

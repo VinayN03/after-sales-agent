@@ -48,7 +48,7 @@ export function AgentTimeline({ events, title = "Agent activity" }: { events: Ag
       </div>
       <ul className="divide-y divide-gray-50">
         {rows.map(e => (
-          <li key={e.agent} className="px-3 py-2">
+          <li key={e.agent} className="fade-up px-3 py-2">
             <div className="flex items-start gap-2">
               <span className="text-sm leading-5">{ICON[e.agent]}</span>
               <div className="min-w-0 flex-1">

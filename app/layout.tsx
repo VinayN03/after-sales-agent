@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { I18nProvider } from "../lib/i18n";
 

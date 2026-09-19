@@ -26,7 +26,7 @@ export function ApprovalsView({
 
   return (
     <div className="mx-auto max-w-[1400px] px-6 pb-6 pt-2">
-      <button onClick={onBack} className="mb-2 flex items-center gap-1.5 text-[12px] font-medium text-slate-500 hover:text-indigo-600">
+      <button onClick={onBack} className="press mb-2 flex items-center gap-1.5 text-[12px] font-medium text-slate-500 hover:text-indigo-600">
         <ArrowLeft className="h-4 w-4" /> Back to Home
       </button>
       <div className="mb-3 flex items-end justify-between gap-4">
@@ -41,7 +41,7 @@ export function ApprovalsView({
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`rounded-md px-3 py-1 ${tab === id ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
+              className={`press rounded-md px-3 py-1 ${tab === id ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
             >
               {label}
             </button>
@@ -58,9 +58,11 @@ export function ApprovalsView({
           <div className="mt-1 text-[13px] text-slate-400">Ask the agent to process a refund from Home or Conversations.</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3 [&>div]:max-w-none">
-          {shown.map(c => (
-            <CaseCard key={c.caseId} initial={c} conversationId={conversationId} onDecided={onDecided} />
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {shown.map((c, i) => (
+            <div key={c.caseId} className="fade-up" style={{ "--i": i } as React.CSSProperties}>
+              <CaseCard initial={c} conversationId={conversationId} onDecided={onDecided} fullWidth />
+            </div>
           ))}
         </div>
       )}

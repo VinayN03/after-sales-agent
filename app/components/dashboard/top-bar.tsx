@@ -42,19 +42,19 @@ export function TopBar({
           onClick={onReset}
           disabled={resetting}
           title="Reset demo data"
-          className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+          className="press flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
         >
           <RotateCcw className="h-3 w-3" />
           {resetting ? "Resetting…" : "Reset demo"}
         </button>
         <button
           onClick={onToggleLang}
-          className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
+          className="press rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50"
         >
           {langLabel}
         </button>
 
-        <button onClick={onOpenApprovals} className="relative rounded-full p-1.5 text-slate-500 hover:bg-white" aria-label="Pending approvals">
+        <button onClick={onOpenApprovals} className="press relative rounded-full p-1.5 text-slate-500 hover:bg-white" aria-label="Pending approvals">
           <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
           {pending > 0 && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-red-500 ring-2 ring-[#F6F7FB]" />}
         </button>

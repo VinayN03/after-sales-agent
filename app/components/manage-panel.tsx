@@ -400,7 +400,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
       <div className="px-3 py-2 flex gap-1.5 border-b border-gray-50 flex-shrink-0">
         <button
           onClick={() => setActiveCategory("all")}
-          className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-all ${
+          className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] ${
             activeCategory === "all" ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
           }`}
         >{t("ui.manage.tabAll")}</button>
@@ -408,7 +408,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
           <button
             key={cat.value}
             onClick={() => setActiveCategory(cat.value)}
-            className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-all ${
+            className={`text-[11px] px-2.5 py-1 rounded-md font-medium transition-[color,background-color,border-color,box-shadow,opacity,width] ${
               activeCategory === cat.value ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"
             }`}
           >{cat.icon} {cat.label}</button>
@@ -451,7 +451,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
           {demoTotal > 0 && (
             <div className="h-1 bg-indigo-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+                className="h-full bg-indigo-500 rounded-full transition-[color,background-color,border-color,box-shadow,opacity,width] duration-300"
                 style={{ width: `${(demoImportedCount / demoTotal) * 100}%` }}
               />
             </div>
@@ -659,7 +659,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
                     </div>
                     <button
                       onClick={() => handleViewDoc(doc.docId, doc.category, doc.filename)}
-                      className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-all flex-shrink-0"
+                      className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition-[color,background-color,border-color,box-shadow,opacity,width] flex-shrink-0"
                       title={t("ui.manage.viewDoc")}
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -669,7 +669,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
                     </button>
                     <button
                       onClick={() => handleDelete(doc.docId, doc.category)}
-                      className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0"
+                      className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-[color,background-color,border-color,box-shadow,opacity,width] flex-shrink-0"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

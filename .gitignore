@@ -28,3 +28,6 @@ next-env.d.ts
 skills-lock.json
 *.zip
 .tmp/
+
+# agent skill symlinks (installed tooling, not part of the app)
+.claude/

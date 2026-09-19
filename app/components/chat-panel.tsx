@@ -319,7 +319,7 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div key={i} className={`fade-up flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role !== "user" && (
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mr-2.5 mt-0.5 shadow-sm">AI</div>
             )}
@@ -360,7 +360,7 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
                           key={s.id}
                           onClick={() => handleSend(s.action || s.title)}
                           disabled={isLoading}
-                          className="text-[12px] px-3 py-1.5 rounded-lg bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 transition-all shadow-sm disabled:opacity-50"
+                          className="text-[12px] px-3 py-1.5 rounded-lg bg-white text-gray-600 border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50/50 press shadow-sm disabled:opacity-50"
                         >
                           <span className="mr-1">{s.emoji}</span>{s.title}
                         </button>
@@ -393,14 +393,14 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
               placeholder={t("ui.chat.placeholder")}
               disabled={isLoading}
               rows={1}
-              className="w-full resize-none rounded-xl border border-gray-200 pl-4 pr-4 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 disabled:opacity-50 bg-gray-50/50 placeholder:text-gray-400 transition-all"
+              className="w-full resize-none rounded-xl border border-gray-200 pl-4 pr-4 py-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-300 disabled:opacity-50 bg-gray-50/50 placeholder:text-gray-400 transition-[box-shadow,border-color]"
             />
           </div>
           {isLoading ? (
             <button
               type="button"
               onClick={handleStop}
-              className="h-9 w-9 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors flex-shrink-0 shadow-sm"
+              className="h-9 w-9 rounded-xl bg-red-500 text-white flex items-center justify-center hover:bg-red-600 press flex-shrink-0 shadow-sm"
             >
               <span className="w-2.5 h-2.5 bg-white rounded-[2px]" />
             </button>
@@ -408,7 +408,7 @@ export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: s
             <button
               type="submit"
               disabled={!input.trim()}
-              className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors disabled:opacity-30 flex-shrink-0 shadow-sm"
+              className="h-9 w-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 press disabled:opacity-30 flex-shrink-0 shadow-sm"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 12h14M12 5l7 7-7 7" />
