@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { MessageSquare, X } from "lucide-react";
 import { ChatPanel } from "./components/chat-panel";
-import { ManagePanel } from "./components/manage-panel";
 import { EdgeNav, type View } from "./components/dashboard/edge-nav";
 import { TopBar } from "./components/dashboard/top-bar";
 import { HomeView } from "./components/dashboard/home-view";
@@ -12,6 +11,7 @@ import { useCases } from "./components/dashboard/use-cases";
 import { CustomersView } from "./components/dashboard/customers-view";
 import { OrdersView } from "./components/dashboard/orders-view";
 import { AnalyticsView } from "./components/dashboard/analytics-view";
+import { KnowledgeView } from "./components/dashboard/knowledge-view";
 import { SettingsView } from "./components/dashboard/settings-view";
 import { useT } from "../lib/i18n";
 
@@ -21,7 +21,7 @@ interface HealthStatus {
   missing: string[];
 }
 
-const VALID_VIEWS: View[] = ["home", "conversations", "approvals", "customers", "orders", "analytics", "settings"];
+const VALID_VIEWS: View[] = ["home", "conversations", "approvals", "customers", "orders", "knowledge", "analytics", "settings"];
 
 export default function Home() {
   const { t, locale, setLocale } = useT();
@@ -189,7 +189,7 @@ export default function Home() {
               loaded={loaded}
               onAsk={handleAsk}
               onOpenApprovals={() => setView("approvals")}
-              onOpenKnowledge={() => setShowManage(true)}
+              onOpenKnowledge={() => setView("knowledge")}
               split={chatOpen}
               onFocusChat={openChat}
             />
@@ -199,6 +199,7 @@ export default function Home() {
           )}
           {view === "customers" && <CustomersView onOpenApprovals={() => setView("approvals")} />}
           {view === "orders" && <OrdersView onAsk={handleAsk} onOpenApprovals={() => setView("approvals")} />}
+          {view === "knowledge" && <KnowledgeView onAsk={handleAsk} />}
           {view === "analytics" && <AnalyticsView cases={cases} loaded={loaded} />}
           {view === "settings" && <SettingsView onReset={() => setShowResetModal(true)} />}
 
@@ -251,18 +252,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Knowledge base: a drawer over everything (it is a management tool, not part of the split). */}
-      {showManage && (
-        <>
-          <div className="fixed inset-0 z-40 bg-slate-900/10" onClick={() => setShowManage(false)} aria-hidden="true" />
-          <aside
-            aria-label="Knowledge base"
-            className="slide-in-right fixed inset-y-0 right-0 z-50 w-[420px] max-w-[92vw] border-l border-slate-200 bg-white shadow-[-16px_0_40px_rgba(15,23,42,0.14)]"
-          >
-            <ManagePanel onClose={() => setShowManage(false)} />
-          </aside>
-        </>
-      )}
+      
 
       {showResetModal && (
         <div

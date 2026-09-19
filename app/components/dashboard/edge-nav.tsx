@@ -13,9 +13,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type View = "home" | "conversations" | "approvals" | "customers" | "orders" | "analytics" | "settings";
+export type View = "home" | "conversations" | "approvals" | "customers" | "orders" | "knowledge" | "analytics" | "settings";
 
-export const NAV_ITEMS: Array<{ id: View | "knowledge"; label: string; icon: LucideIcon }> = [
+export const NAV_ITEMS: Array<{ id: View; label: string; icon: LucideIcon }> = [
   { id: "home", label: "Home", icon: Home },
   { id: "conversations", label: "Conversations", icon: MessageSquare },
   { id: "approvals", label: "Approvals", icon: UserCheck },
@@ -53,13 +53,12 @@ function Rail({
   return (
     <div className="flex flex-col gap-0.5">
       {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
-        const active = id === "knowledge" ? knowledgeOpen : id === "conversations" ? chatOpen : id === view;
+        const active = id === "conversations" ? chatOpen : id === view;
         return (
           <button
             key={id}
             onClick={() => {
-              if (id === "knowledge") onToggleKnowledge();
-              else onNavigate(id);
+              onNavigate(id);
               afterClick();
             }}
             aria-label={label}
