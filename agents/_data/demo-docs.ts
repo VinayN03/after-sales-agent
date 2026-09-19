@@ -242,8 +242,8 @@ export const DEMO_DOCS_EN: DemoDoc[] = [
     category: "policy",
     content: `[Return & Refund Policy]
 
-1. Returns within 7 days for any reason (item must be in resellable condition).
-2. Quality issues: returnable within 15 days, shipping covered by us.
+1. Returns within 30 days for any reason (item must be in resellable condition).
+2. Quality issues: returnable within 30 days, shipping covered by us.
 3. Refund method: original payment method (WeChat / Alipay / bank card), 3-5 business days.
 4. Not eligible for return: customized items, opened single-use consumables, downloadable digital goods.
 5. Returns must include complete packaging and accessories, otherwise the refund amount may be reduced.
@@ -272,7 +272,7 @@ A: Quality issues: covered by the platform (we provide a free pickup code). Othe
     category: "policy",
     content: `[Exchange Policy]
 
-1. Exchange requests accepted within 15 days of receipt.
+1. Exchange requests accepted within 30 days of receipt.
 2. You can exchange for a different variant (color / size) or an equivalent item.
 3. Quality issues: shipping covered by the platform. Otherwise, customer covers round-trip shipping.
 4. Items must be in pristine condition with original packaging.

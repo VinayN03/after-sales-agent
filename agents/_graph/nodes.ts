@@ -296,7 +296,7 @@ export async function lookupOrder(state: AfterSalesStateType, context: AgentCont
 
     const storeLines = storeOrders.map(o => {
       const itemNames = o.items.map(i => i.name).join(sep);
-      return `- **${o.orderId}**: ${itemNames} (${statusLabel(locale, o.status)}, ¥${o.totalAmount})`;
+      return `- **${o.orderId}**: ${itemNames} (${statusLabel(locale, o.status)}, $${o.totalAmount})`;
     });
 
     const blobLines = blobSummaries.map(s => {
@@ -373,7 +373,7 @@ export async function requestRefund(state: AfterSalesStateType, context: AgentCo
       const itemNames = o.items.map(i => i.name).join(sep);
       const eligible = o.status === "delivered" || o.status === "shipped";
       const note = eligible ? "" : ineligibleNote(statusLabel(locale, o.status));
-      return `- **${o.orderId}**: ${itemNames} (¥${o.totalAmount})${note}`;
+      return `- **${o.orderId}**: ${itemNames} ($${o.totalAmount})${note}`;
     });
 
     const blobLines = blobSummaries.map(s => {
@@ -515,7 +515,7 @@ export async function requestExchange(state: AfterSalesStateType, context: Agent
       const itemNames = o.items.map(i => i.name).join(sep);
       const eligible = o.status === "delivered";
       const note = eligible ? "" : ineligibleNote(statusLabel(locale, o.status));
-      return `- **${o.orderId}**: ${itemNames} (¥${o.totalAmount})${note}`;
+      return `- **${o.orderId}**: ${itemNames} ($${o.totalAmount})${note}`;
     });
 
     const blobLines = blobSummaries.map(s => {

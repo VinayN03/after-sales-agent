@@ -31,3 +31,6 @@ skills-lock.json
 
 # agent skill symlinks (installed tooling, not part of the app)
 .claude/
+
+# presentation deck (a deliverable, not source)
+presentation/

@@ -6,13 +6,14 @@
  * screens) and a small column of icons fades in, also centred; everything above and below stays empty.
  */
 import { useState } from "react";
-import { BarChart3, BookOpen, Home, MessageSquare, Package, Settings, Users, type LucideIcon } from "lucide-react";
+import { BarChart3, BookOpen, Home, MessageSquare, Package, PanelLeftOpen, Settings, UserCheck, Users, type LucideIcon } from "lucide-react";
 
 export type View = "home" | "conversations" | "approvals" | "customers" | "orders" | "analytics" | "settings";
 
-const ITEMS: Array<{ id: View | "knowledge"; label: string; icon: LucideIcon }> = [
+export const NAV_ITEMS: Array<{ id: View | "knowledge"; label: string; icon: LucideIcon }> = [
   { id: "home", label: "Home", icon: Home },
   { id: "conversations", label: "Conversations", icon: MessageSquare },
+  { id: "approvals", label: "Approvals", icon: UserCheck },
   { id: "customers", label: "Customers", icon: Users },
   { id: "orders", label: "Orders", icon: Package },
   { id: "knowledge", label: "Knowledge", icon: BookOpen },
@@ -26,10 +27,12 @@ export function EdgeNav({
   chatOpen = false,
   onNavigate,
   onToggleKnowledge,
+  onShowSidebar,
 }: {
   view: View;
   knowledgeOpen: boolean;
   chatOpen?: boolean;
+  onShowSidebar?: () => void;
   onNavigate: (v: View) => void;
   onToggleKnowledge: () => void;
 }) {
@@ -59,7 +62,7 @@ export function EdgeNav({
           ${pinned ? "pointer-events-auto translate-x-0 opacity-100" : "pointer-events-none -translate-x-2 opacity-0"}`}
       >
         <div className="flex flex-col gap-0.5">
-          {ITEMS.map(({ id, label, icon: Icon }) => {
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
             const active = id === "knowledge" ? knowledgeOpen : id === "conversations" ? chatOpen : id === view;
             return (
               <button
@@ -82,6 +85,24 @@ export function EdgeNav({
               </button>
             );
           })}
+          {onShowSidebar && (
+            <>
+              <div className="mx-1.5 my-1 h-px bg-slate-200" />
+              <button
+                onClick={() => {
+                  onShowSidebar();
+                  setPinned(false);
+                }}
+                aria-label="Show sidebar"
+                className="press group/item relative flex h-8 w-8 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              >
+                <PanelLeftOpen className="h-4 w-4" strokeWidth={1.8} />
+                <span className="pointer-events-none absolute left-full ml-2.5 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity duration-150 group-hover/item:opacity-100">
+                  Show sidebar
+                </span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </nav>
