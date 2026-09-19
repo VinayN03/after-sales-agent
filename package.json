@@ -1,0 +1,40 @@
+{
+  "name": "after-sales-assistant",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "npx --yes esbuild tests/pipeline.test.ts --bundle --platform=node --format=esm --outfile=.tmp/pipeline.test.mjs --log-level=warning \"--banner:js=import {createRequire as __cr} from 'module'; const require = __cr(import.meta.url);\" && node .tmp/pipeline.test.mjs"
+  },
+  "dependencies": {
+    "@langchain/core": "^1.1.48",
+    "@langchain/langgraph": "^1.4.1",
+    "@langchain/openai": "^1.4.7",
+    "clsx": "^2.1.1",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.12.0",
+    "marked": "^18.0.4",
+    "next": "^16.0.0",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwind-merge": "^2.6.0",
+    "unpdf": "^0.12.1",
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.6.3",
+    "@edgeone/types": "^1.0.1"
+  }
+}
