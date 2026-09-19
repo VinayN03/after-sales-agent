@@ -75,6 +75,7 @@ export async function onRequest(rawContext: AgentContext) {
     await Promise.all([
       kv.delete(DOCUMENT_MANIFEST_NAMESPACE, "all"),
       kv.delete(ORDER_MANIFEST_NAMESPACE, "all"),
+      kv.delete(["aftersales", "cases_manifest"], "all"),
     ]);
 
     return jsonResponse({

@@ -23,7 +23,7 @@ const REVEAL_MS = 300;
 
 type Tab = "chat" | "email" | "sms";
 
-export function CaseCard({ initial, conversationId }: { initial: Case; conversationId: string }) {
+export function CaseCard({ initial, conversationId, onDecided }: { initial: Case; conversationId: string; onDecided?: () => void }) {
   const [c, setC] = useState(initial);
   const [role, setRole] = useState<"support" | "manager">("support");
   const [busy, setBusy] = useState(false);
@@ -46,7 +46,7 @@ export function CaseCard({ initial, conversationId }: { initial: Case; conversat
       if (!res.ok) throw new Error(data.error || res.statusText);
       const events: AgentEvent[] = data.newEvents ?? [];
       events.forEach((e, i) => setTimeout(() => setShown(prev => [...prev, e]), i * REVEAL_MS));
-      setTimeout(() => { setC(data.case); setBusy(false); }, events.length * REVEAL_MS);
+      setTimeout(() => { setC(data.case); setBusy(false); onDecided?.(); }, events.length * REVEAL_MS);
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);

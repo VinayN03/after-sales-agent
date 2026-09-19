@@ -16,6 +16,7 @@
     "@langchain/openai": "^1.4.7",
     "clsx": "^2.1.1",
     "jszip": "^3.10.1",
+    "lucide-react": "^1.47.0",
     "mammoth": "^1.12.0",
     "marked": "^18.0.4",
     "next": "^16.0.0",
@@ -27,6 +28,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@edgeone/types": "^1.0.1",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.14",
@@ -34,7 +36,6 @@
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.6.3",
-    "@edgeone/types": "^1.0.1"
+    "typescript": "^5.6.3"
   }
 }

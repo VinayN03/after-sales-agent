@@ -43,7 +43,7 @@ function MarkdownBlock({ content }: { content: string }) {
 
 // ============ Component ============
 
-export function ChatPanel() {
+export function ChatPanel({ pendingSend }: { pendingSend?: { id: number; text: string } | null }) {
   const { t, locale } = useT();
 
   // Initial welcome message — recompute when locale changes
@@ -272,6 +272,15 @@ export function ChatPanel() {
       abortControllerRef.current = null;
     }
   }, [conversationId, isLoading, locale, t, pendingAction]);
+
+  // Prompts sent from the dashboard (hero input / quick chips) arrive as a prop; send each one once.
+  const lastPendingRef = useRef(0);
+  useEffect(() => {
+    if (pendingSend && pendingSend.id !== lastPendingRef.current) {
+      lastPendingRef.current = pendingSend.id;
+      handleSend(pendingSend.text);
+    }
+  }, [pendingSend, handleSend]);
 
   const handleStop = useCallback(() => {
     abortControllerRef.current?.abort();

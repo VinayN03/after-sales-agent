@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { ChatPanel } from "./components/chat-panel";
 import { ManagePanel } from "./components/manage-panel";
-import { DeployButtons } from "./components/deploy-buttons";
+import { Sidebar, type View } from "./components/dashboard/sidebar";
+import { TopBar } from "./components/dashboard/top-bar";
+import { HomeView } from "./components/dashboard/home-view";
+import { ApprovalsView } from "./components/dashboard/approvals-view";
+import { useCases } from "./components/dashboard/use-cases";
 import { useT } from "../lib/i18n";
 
 interface HealthStatus {
@@ -12,13 +16,19 @@ interface HealthStatus {
   missing: string[];
 }
 
+const PLACEHOLDER_VIEWS: View[] = ["customers", "orders", "analytics", "settings"];
+
 export default function Home() {
   const { t, locale, setLocale } = useT();
+  const [view, setView] = useState<View>("home");
   const [showManage, setShowManage] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetVersion, setResetVersion] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [pendingSend, setPendingSend] = useState<{ id: number; text: string } | null>(null);
+  const { cases, loaded, refresh } = useCases();
+  const pendingCount = cases.filter(c => c.status === "pending_approval").length;
 
   useEffect(() => {
     fetch("/health")
@@ -27,7 +37,22 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
+  // Deep links: /#approvals, /#conversations … (and the current view is kept in the URL hash).
+  useEffect(() => {
+    const fromHash = window.location.hash.replace("#", "") as View;
+    if (["home", "conversations", "approvals", ...PLACEHOLDER_VIEWS].includes(fromHash)) setView(fromHash);
+  }, []);
+  useEffect(() => {
+    window.history.replaceState(null, "", view === "home" ? window.location.pathname : `#${view}`);
+  }, [view]);
+
   const showWarning = health && !health.ok;
+
+  /** Open the conversation view; a non-empty prompt is sent to the agent straight away. */
+  const handleAsk = (text: string) => {
+    setView("conversations");
+    if (text.trim()) setPendingSend({ id: Date.now(), text });
+  };
 
   const handleReset = async () => {
     if (isResetting) return;
@@ -58,7 +83,9 @@ export default function Home() {
 
       localStorage.removeItem(key);
       setShowManage(false);
+      setPendingSend(null);
       setResetVersion(version => version + 1);
+      refresh();
     } catch {
       window.alert(t("ui.header.resetFailed"));
     } finally {
@@ -67,90 +94,79 @@ export default function Home() {
   };
 
   return (
-    <main className="h-screen flex flex-col bg-[#f7f8fa]">
-      {/* Env config warning banner */}
-      {showWarning && (
-        <div className="flex-shrink-0 bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2.5">
-          <span className="text-amber-500 text-sm flex-shrink-0">⚠️</span>
-          <div className="flex-1 min-w-0">
-            <span className="text-[12px] text-amber-800 font-medium">{t("ui.warn.envMissing")}</span>
-            {!health.hasAiGateway && (health.missing?.length ?? 0) > 0 && (
-              <span className="text-[11px] text-amber-600 ml-1.5">
-                {t("ui.warn.missing", { names: (health.missing ?? []).join(locale === "en" ? ", " : "、") })}
-              </span>
-            )}
-          </div>
-          <button
-            onClick={() => setHealth(h => h ? { ...h, ok: true } : h)}
-            className="flex-shrink-0 text-amber-400 hover:text-amber-600 text-sm leading-none"
-          >✕</button>
-        </div>
-      )}
+    <main className="flex h-screen bg-[#F6F7FB]">
+      <Sidebar
+        view={view}
+        knowledgeOpen={showManage}
+        onNavigate={setView}
+        onToggleKnowledge={() => setShowManage(v => !v)}
+      />
 
-      {/* Header */}
-      <header className="flex-shrink-0 h-14 bg-white border-b border-gray-200/80 px-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-            AI
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Env config warning banner */}
+        {showWarning && (
+          <div className="flex-shrink-0 bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center gap-2.5">
+            <span className="text-amber-500 text-sm flex-shrink-0">⚠️</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-[12px] text-amber-800 font-medium">{t("ui.warn.envMissing")}</span>
+              {!health.hasAiGateway && (health.missing?.length ?? 0) > 0 && (
+                <span className="text-[11px] text-amber-600 ml-1.5">
+                  {t("ui.warn.missing", { names: (health.missing ?? []).join(locale === "en" ? ", " : "、") })}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setHealth(h => h ? { ...h, ok: true } : h)}
+              className="flex-shrink-0 text-amber-400 hover:text-amber-600 text-sm leading-none"
+            >✕</button>
           </div>
-          <div>
-            <h1 className="text-[15px] font-semibold text-gray-900 leading-tight">{t("ui.header.title")}</h1>
-            <p className="text-[11px] text-gray-400 leading-tight">{t("ui.header.subtitle")}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <DeployButtons
-            templateSlug="after-sales-assistant"
-            githubUrl="https://github.com/edgeone-pages-test/after-sales-assistant"
-            lang={locale}
-          />
-          <button
-            onClick={() => setShowResetModal(true)}
-            disabled={isResetting}
-            className="text-[11px] px-2.5 py-1 rounded-md border border-red-200 text-red-600 font-medium hover:bg-red-50 transition-colors disabled:opacity-50"
-            title={t("ui.header.resetConfirm")}
-          >
-            {isResetting ? t("ui.header.resetting") : t("ui.header.reset")}
-          </button>
-          <button
-            onClick={() => setLocale(locale === "en" ? "zh" : "en")}
-            className="text-[11px] px-2.5 py-1 rounded-md border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors"
-            title={locale === "en" ? "切换到中文" : "Switch to English"}
-          >
-            {t("ui.header.langSwitch")}
-          </button>
-          <button
-            onClick={() => setShowManage(!showManage)}
-            className={`text-xs px-3.5 py-1.5 rounded-lg font-medium transition-all ${
-              showManage
-                ? "bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-            }`}
-          >
-            <span className="mr-1">📚</span> {t("ui.header.kb")}
-          </button>
-          <span className="flex items-center gap-1.5 text-[11px] text-gray-400">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-            </span>
-            {t("ui.header.online")}
-          </span>
-        </div>
-      </header>
-
-      {/* Body */}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 min-w-0">
-          <ChatPanel key={resetVersion} />
-        </div>
-
-        {showManage && (
-          <aside className="w-[380px] flex-shrink-0 border-l border-gray-200/80 bg-white shadow-[-4px_0_12px_rgba(0,0,0,0.03)]">
-            <ManagePanel onClose={() => setShowManage(false)} />
-          </aside>
         )}
+
+        <TopBar
+          pending={pendingCount}
+          resetting={isResetting}
+          langLabel={t("ui.header.langSwitch")}
+          onReset={() => setShowResetModal(true)}
+          onToggleLang={() => setLocale(locale === "en" ? "zh" : "en")}
+          onOpenApprovals={() => setView("approvals")}
+        />
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {view === "home" && (
+            <HomeView
+              cases={cases}
+              loaded={loaded}
+              onAsk={handleAsk}
+              onOpenApprovals={() => setView("approvals")}
+              onOpenKnowledge={() => setShowManage(true)}
+            />
+          )}
+          {view === "approvals" && (
+            <ApprovalsView cases={cases} loaded={loaded} onDecided={refresh} onBack={() => setView("home")} />
+          )}
+          {PLACEHOLDER_VIEWS.includes(view) && (
+            <div className="flex h-full items-center justify-center pb-24">
+              <div className="text-center">
+                <div className="text-[18px] font-semibold capitalize text-slate-700">{view}</div>
+                <div className="mt-1 text-[13px] text-slate-400">Coming soon</div>
+              </div>
+            </div>
+          )}
+
+          {/* Kept mounted (hidden when inactive) so the conversation survives switching views. */}
+          <div className={view === "conversations" ? "h-full px-8 pb-6" : "hidden"}>
+            <div className="h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_1px_3px_rgba(16,24,40,0.04)]">
+              <ChatPanel key={resetVersion} pendingSend={pendingSend} />
+            </div>
+          </div>
+        </div>
       </div>
+
+      {showManage && (
+        <aside className="w-[380px] flex-shrink-0 border-l border-gray-200/80 bg-white shadow-[-4px_0_12px_rgba(0,0,0,0.03)]">
+          <ManagePanel onClose={() => setShowManage(false)} />
+        </aside>
+      )}
 
       {showResetModal && (
         <div

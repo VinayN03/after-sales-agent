@@ -32,7 +32,7 @@ const ZH: Record<string, string> = {
   "ui.warn.missing": "缺少：{names}",
 
   // Chat panel
-  "ui.chat.welcome": "您好！我是售后客服助手，有什么可以帮您？\n\n如果是首次使用，请先打开右上角「知识库」一键导入演示数据。",
+  "ui.chat.welcome": "您好！我是售后客服助手。请描述您的问题，或选择下方的演示场景。\n\n专业智能体（客户、订单、政策、风控）会审核每个案件，高风险操作需人工批准后才会执行。",
   "ui.chat.placeholder": "描述您的问题，或输入订单号查询...",
   "ui.chat.send": "发送",
   "ui.chat.processing": "正在处理...",
@@ -134,7 +134,7 @@ const EN: Record<string, string> = {
   "ui.warn.missing": "Missing: {names}",
 
   // Chat panel
-  "ui.chat.welcome": "Hello! I'm the after-sales assistant. How can I help?\n\nFirst time? Open the Knowledge Base on the top-right and import the demo data.",
+  "ui.chat.welcome": "Hello! I'm the after-sales assistant. Describe an issue, or pick a demo scenario below.\n\nSpecialist agents (customer, order, policy, risk) review every case, and a human approves anything risky before it runs.",
   "ui.chat.placeholder": "Describe your issue or enter an order ID...",
   "ui.chat.send": "Send",
   "ui.chat.processing": "Processing...",
