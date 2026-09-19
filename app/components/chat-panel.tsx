@@ -92,6 +92,36 @@ export function ChatPanel({ pendingSend, variant = "operator" }: { pendingSend?:
     }
   }, []);
 
+  // Restore the stored conversation (text only, no cards) once after a page reload.
+  const historyRestoredRef = useRef(false);
+  useEffect(() => {
+    if (historyRestoredRef.current) return;
+    historyRestoredRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch("/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "makers-conversation-id": conversationId },
+          body: "{}",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const restored: Array<{ role: "user" | "assistant"; content: string }> = Array.isArray(data?.messages)
+          ? data.messages.filter((m: any) => (m?.role === "user" || m?.role === "assistant") && typeof m.content === "string")
+          : [];
+        if (restored.length === 0) return;
+        setMessages(prev => {
+          const isOnlyWelcome = prev.length === 1 && prev[0].role === "assistant";
+          if (!isOnlyWelcome) return prev;
+          return [prev[0], ...restored.map(m => ({ role: m.role, content: m.content }))];
+        });
+      } catch {
+        // Restoring history is best-effort; stay silent on failure.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // When locale changes, refresh ONLY the initial welcome message (preserve conversation history)
   useEffect(() => {
     setMessages(prev => {

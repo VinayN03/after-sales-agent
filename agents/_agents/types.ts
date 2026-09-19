@@ -80,6 +80,30 @@ export interface Comms {
 
 export type CaseStatus = "pending_approval" | "executed" | "rejected" | "denied";
 
+/** What a tool is allowed to do: read data, write data, do something irreversible, run in the sandbox, or call a model. */
+export type ToolScope = "read" | "write" | "irreversible" | "sandbox" | "model";
+
+/** One tool invocation, recorded for tracing and audit. */
+export interface ToolCall {
+  tool: string;
+  agent: AgentName;
+  scope: ToolScope;
+  status: "ok" | "error" | "denied";
+  ms: number;
+  ts: string;
+  note?: string;
+}
+
+/** Audit report produced by the sandbox tool (or its local fallback), optionally archived in Blob storage. */
+export interface CaseReport {
+  filename: string;
+  markdown: string;
+  engine: "sandbox" | "local";
+  ms: number;
+  at: string;
+  archived?: { key: string; url: string };
+}
+
 export interface Case {
   caseId: string;
   orderId: string;
@@ -97,6 +121,10 @@ export interface Case {
   execution?: string[];
   comms?: Comms;
   decidedBy?: string;
+  /** Correlates the audit trail, tool calls and server logs for this run. */
+  traceId?: string;
+  toolCalls?: ToolCall[];
+  report?: CaseReport;
   createdAt: string;
   updatedAt: string;
 }

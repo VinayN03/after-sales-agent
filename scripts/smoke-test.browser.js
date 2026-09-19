@@ -54,7 +54,11 @@
   }
 
   const decide = (caseId, decision, role) =>
-    api("/approve-refund", { method: "POST", conversationId: "smoke", body: { caseId, decision, role } });
+    api("/approve-refund", {
+      method: "POST",
+      conversationId: "smoke",
+      body: { caseId, decision, role, passcode: role === "manager" ? "manager-demo" : "support-demo" },
+    });
 
   const engineOf = (events, agent) => {
     const e = [...events].reverse().find(x => x.agent === agent && x.status !== "running");
@@ -73,7 +77,7 @@
   else warn("/api/health — Python service not reachable", `HTTP ${py.status}; agents will use the TypeScript fallback`);
 
   // 2. Scenarios
-  const reset = await api("/reset", { method: "POST", conversationId: "smoke", body: {} });
+  const reset = await api("/reset", { method: "POST", conversationId: "smoke", body: { passcode: "manager-demo" } });
   check(reset.status === 200, "reset demo data", `HTTP ${reset.status}`);
 
   async function scenario(name, message, expectRoute, expectStatus) {
@@ -111,6 +115,12 @@
   if (c103) {
     const denied = await decide(c103.caseId, "approve", "support");
     check(denied.status === 403, "support CANNOT approve the manager-level case", `HTTP ${denied.status}`);
+    const badPass = await api("/approve-refund", {
+      method: "POST",
+      conversationId: "smoke",
+      body: { caseId: "CASE-ORD-20260905-103", decision: "approve", role: "manager", passcode: "definitely-wrong" },
+    });
+    check(badPass.status === 401, "wrong passcode is rejected", `HTTP ${badPass.status}`);
     const ok = await decide(c103.caseId, "approve", "manager");
     check(ok.status === 200 && ok.json?.case?.status === "executed", "manager approves it → executed", `HTTP ${ok.status}`);
   }

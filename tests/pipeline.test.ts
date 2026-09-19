@@ -24,7 +24,8 @@ async function run(orderId: string, message: string) {
   return { res, c: (res.cardEvent as any).data.case };
 }
 async function decide(caseId: string, decision: string, role: string) {
-  ctx.request.body = { caseId, decision, role };
+  const passcode = role === "manager" ? "manager-demo" : role === "support" ? "support-demo" : "wrong";
+  ctx.request.body = { caseId, decision, role, passcode };
   const r = await approve(ctx);
   return { status: r.status, body: await r.json() };
 }

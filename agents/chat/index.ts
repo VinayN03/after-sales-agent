@@ -45,6 +45,28 @@ async function saveState(context: AgentContext, threadId: string, state: Partial
   }
 }
 
+// ─── Conversation History ───
+
+const HISTORY_LIMIT = 8;
+const HISTORY_MAX_CHARS = 600;
+
+async function loadHistory(context: AgentContext, conversationId: string): Promise<AfterSalesStateType["history"]> {
+  try {
+    // The docs don't say which end `limit` truncates, so fetch the maximum and keep the newest turns here.
+    const stored = await context.store.getMessages({ conversationId, limit: 100, order: "asc" });
+    if (!Array.isArray(stored)) return [];
+    const history: AfterSalesStateType["history"] = [];
+    for (const m of stored) {
+      if ((m?.role === "user" || m?.role === "assistant") && typeof m.content === "string") {
+        history.push({ role: m.role, content: m.content.slice(0, HISTORY_MAX_CHARS) });
+      }
+    }
+    return history.slice(-HISTORY_LIMIT);
+  } catch {
+    return [];
+  }
+}
+
 // ─── SSE Stream ───
 
 async function* streamStaticText(text: string, node: string, signal?: AbortSignal): AsyncGenerator<string> {
@@ -83,7 +105,12 @@ async function* streamAfterSales(
   const restoredIntent = (pendingAction?.intent as AfterSalesStateType["intent"]) ?? priorState?.intent ?? null;
   const restoredWaiting = pendingAction ? true : (priorState?.waitingForUser ?? false);
 
+  // Recent turns so the LLM nodes keep cross-turn context. The current turn is appended
+  // to the store only after the stream, so this never contains the current message.
+  const history = await loadHistory(context, conversationId);
+
   const input: Partial<AfterSalesStateType> = {
+    history,
     ...(priorState || pendingAction ? {
       currentOrder: preloadedOrder,
       orderId: priorState?.orderId,

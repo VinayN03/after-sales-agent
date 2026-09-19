@@ -8,6 +8,12 @@ import type { Locale } from "../_i18n";
 export const AfterSalesState = Annotation.Root({
   userInput: Annotation<string>({ reducer: (_, n) => n, default: () => "" }),
 
+  // Recent conversation turns (oldest first, excludes the current user message)
+  history: Annotation<Array<{ role: "user" | "assistant"; content: string }>>({
+    reducer: (_, n) => n,
+    default: () => [],
+  }),
+
   // User locale (for i18n response generation)
   locale: Annotation<Locale>({ reducer: (_, n) => n, default: () => "zh" }),
 

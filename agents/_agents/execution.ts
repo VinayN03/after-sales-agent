@@ -8,6 +8,7 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { createModel, createLogger, saveOrder, type Order } from "../_shared";
 import { saveCase } from "./store";
 import { CREDIT_BONUS } from "./resolution";
+import { runTool, type ApprovalProof } from "./tools";
 import { money } from "./specialists";
 import type { AgentEvent, AgentName, Case, Comms, EventStatus } from "./types";
 
@@ -146,16 +147,28 @@ function emitAudit(c: Case, emit: Emit) {
 
 // ─── Finalizers ───
 
+/** Who authorised execution: the human role that decided the case, or the autonomy policy. */
+function approvalFor(c: Case): ApprovalProof | undefined {
+  if (c.decidedBy === "support" || c.decidedBy === "manager") return { by: c.decidedBy };
+  if (c.decision?.route === "autonomous") return { by: "autonomy-policy" };
+  return undefined;
+}
+
 /** Run the action + communication + audit steps for an approved (or autonomous) case. */
 export async function executeCase(context: AgentContext, env: AgentEnv, c: Case, order: Order, emit: Emit): Promise<Order> {
   emit("action", "running", "Execution Agent", "Calling refund / order / shipping / CRM APIs…");
-  const { steps, order: updated } = runAction(c, order);
+  // Irreversible tool: the registry refuses to run it without proof of authorisation — either the
+  // autonomy policy (the decision engine routed this case as autonomous) or a human role that decided it.
+  const { steps, updated } = await runTool(c, "action", "refund.execute", async () => {
+    const r = runAction(c, order);
+    await saveOrder(context, r.order);
+    return { steps: r.steps, updated: r.order };
+  }, { approval: approvalFor(c) });
   c.execution = steps;
-  await saveOrder(context, updated);
   emit("action", "done", "Execution Agent", steps[0], steps);
 
   emit("communication", "running", "Communication Agent", "Drafting customer messages…");
-  const { comms, source } = await communicationAgent(c, "approved", env);
+  const { comms, source } = await runTool(c, "communication", "comms.draft", () => communicationAgent(c, "approved", env));
   c.comms = comms;
   emit("communication", "done", "Communication Agent",
     `Drafted chat, email and SMS · customer prefers ${c.customer.preferredChannel}${source === "llm" ? "" : " (template)"}`);
@@ -169,7 +182,7 @@ export async function executeCase(context: AgentContext, env: AgentEnv, c: Case,
 /** Close a case without executing: rejected by a human, or denied by policy. */
 export async function closeCase(context: AgentContext, env: AgentEnv, c: Case, order: Order, emit: Emit, outcome: "rejected" | "denied"): Promise<Order> {
   emit("communication", "running", "Communication Agent", "Drafting customer notice…");
-  const { comms } = await communicationAgent(c, outcome, env);
+  const { comms } = await runTool(c, "communication", "comms.draft", () => communicationAgent(c, outcome, env));
   c.comms = comms;
   emit("communication", "done", "Communication Agent", "Drafted decline notice (chat, email, SMS)");
 

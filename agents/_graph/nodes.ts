@@ -8,7 +8,7 @@ import type { BaseStore } from '@langchain/langgraph';
  * every request binds its own store — no module-level mutable state, safe under
  * concurrency.
  */
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { createModel, createLogger } from "../_shared";
 import type { AfterSalesStateType } from "./state";
 
@@ -35,6 +35,13 @@ function chunkText(content: unknown): string {
     if (part && typeof part === "object" && "text" in part) return String((part as { text?: unknown }).text ?? "");
     return "";
   }).join("");
+}
+
+/** Convert recent conversation turns into LangChain messages (optionally only the last `max`). */
+function historyMessages(history: AfterSalesStateType["history"] | undefined, max?: number) {
+  const turns = Array.isArray(history) ? history : [];
+  const recent = max !== undefined ? turns.slice(-max) : turns;
+  return recent.map(m => (m.role === "assistant" ? new AIMessage(m.content) : new HumanMessage(m.content)));
 }
 
 async function streamAnswer(
@@ -166,6 +173,7 @@ export async function intentRecognition(state: AfterSalesStateType, env: AgentEn
 - general: 闲聊/打招呼/其他
 
 如果用户同时提到订单号和退货，优先判断为 refund/exchange。`),
+    ...historyMessages(state.history, 4),
     new HumanMessage(state.userInput),
   ], runtime?.signal ? { signal: runtime.signal } : undefined);
 
@@ -260,6 +268,7 @@ ${summaryList}`),
 
 知识库文档：
 ${contextText}${languageDirective(locale)}`),
+    ...historyMessages(state.history),
     new HumanMessage(state.userInput),
   ], runtime, "faq_search");
   return {
@@ -636,6 +645,7 @@ export async function generalChat(state: AfterSalesStateType, env: AgentEnv, run
 - 回答售后政策问题
 
 如果用户的问题模糊，引导他们提供更多信息。保持简洁友好。${languageDirective(locale)}`),
+    ...historyMessages(state.history),
     new HumanMessage(state.userInput),
   ], runtime, "general_chat");
   return {

@@ -15,6 +15,19 @@ let downUntil = 0;
 
 type AgentEnv = Record<string, string | undefined>;
 
+/** The public origin of this site: from the browser's Origin/Referer, or the forwarded host. */
+export function siteOrigin(context: AgentContext): string | null {
+  const headers = (context.request?.headers ?? {}) as Record<string, string | undefined>;
+  const origin = headers["origin"] ?? headers["referer"];
+  if (origin) {
+    try {
+      return new URL(origin).origin;
+    } catch {}
+  }
+  const host = headers["x-forwarded-host"];
+  return host ? `${headers["x-forwarded-proto"] ?? "https"}://${host}` : null;
+}
+
 /** PY_SERVICE_URL wins (local dev); otherwise use the site the browser called, plus /api. */
 function baseUrl(context: AgentContext, env: AgentEnv): string | null {
   if (env.PY_SERVICE_URL) return env.PY_SERVICE_URL.replace(/\/$/, "");

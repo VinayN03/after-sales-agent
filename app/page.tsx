@@ -57,6 +57,10 @@ export default function Home() {
   const handleReset = async () => {
     if (isResetting) return;
 
+    // Reset is manager-only and verified server-side; cancelling the prompt leaves everything untouched.
+    const passcode = window.prompt("Manager passcode to reset demo data (demo: manager-demo)");
+    if (passcode === null) return;
+
     setShowResetModal(false);
     setIsResetting(true);
     try {
@@ -76,9 +80,13 @@ export default function Home() {
           "Content-Type": "application/json",
           "makers-conversation-id": conversationId,
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ passcode }),
       });
 
+      if (response.status === 401) {
+        window.alert("Wrong passcode - demo data was not reset.");
+        return;
+      }
       if (!response.ok) throw new Error("Reset failed");
 
       localStorage.removeItem(key);

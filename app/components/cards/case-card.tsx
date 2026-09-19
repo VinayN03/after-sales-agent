@@ -6,7 +6,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AgentEvent, Case, Route } from "../../../agents/_agents/types";
+import type { AgentEvent, Case, CaseReport, Route, ToolCall } from "../../../agents/_agents/types";
 import { AgentTimeline } from "../agent-timeline";
 
 const ROUTE_STYLE: Record<Route, { label: string; badge: string }> = {
@@ -30,6 +30,10 @@ export function CaseCard({ initial, conversationId, onDecided, fullWidth }: { in
   const [error, setError] = useState("");
   const [shown, setShown] = useState<AgentEvent[]>([]);
   const [tab, setTab] = useState<Tab>("chat");
+  const [passcode, setPasscode] = useState("");
+  const [report, setReport] = useState<CaseReport | undefined>(initial.report);
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState("");
   const pending = c.status === "pending_approval";
   const route = ROUTE_STYLE[c.decision.route];
 
@@ -40,7 +44,7 @@ export function CaseCard({ initial, conversationId, onDecided, fullWidth }: { in
       const res = await fetch("/approve-refund", {
         method: "POST",
         headers: { "Content-Type": "application/json", "makers-conversation-id": conversationId },
-        body: JSON.stringify({ caseId: c.caseId, decision, role }),
+        body: JSON.stringify({ caseId: c.caseId, decision, role, passcode }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
@@ -51,6 +55,41 @@ export function CaseCard({ initial, conversationId, onDecided, fullWidth }: { in
       setError((e as Error).message);
       setBusy(false);
     }
+  };
+
+  /** Run the sandbox report tool for this case (permission-checked and traced server-side). */
+  const generateReport = async () => {
+    setReportBusy(true);
+    setReportError("");
+    try {
+      const res = await fetch("/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "makers-conversation-id": conversationId },
+        body: JSON.stringify({ caseId: c.caseId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      setReport(data.report);
+      setC(prev => ({ ...prev, toolCalls: data.toolCalls ?? prev.toolCalls, report: data.report }));
+    } catch (e) {
+      setReportError((e as Error).message);
+    } finally {
+      setReportBusy(false);
+    }
+  };
+
+  const downloadReport = () => {
+    if (!report) return;
+    if (report.archived) {
+      window.open(report.archived.url, "_blank");
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([report.markdown], { type: "text/markdown" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = report.filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -107,6 +146,15 @@ export function CaseCard({ initial, conversationId, onDecided, fullWidth }: { in
                 </button>
               ))}
             </div>
+            <input
+              type="password"
+              value={passcode}
+              onChange={e => setPasscode(e.target.value)}
+              disabled={busy}
+              autoComplete="off"
+              placeholder={`${role === "manager" ? "Manager" : "Support"} passcode (demo: ${role === "manager" ? "manager-demo" : "support-demo"})`}
+              className="w-full rounded-md border border-amber-300 bg-white px-2.5 py-1.5 text-[12px] text-gray-800 outline-none placeholder:text-gray-400 focus:border-amber-500"
+            />
             <div className="flex gap-2">
               <button
                 onClick={() => decide("approve")}
@@ -159,8 +207,93 @@ export function CaseCard({ initial, conversationId, onDecided, fullWidth }: { in
             </div>
           </div>
         )}
+
+        <details className="rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+          <summary className="cursor-pointer select-none text-[11px] font-medium text-gray-600">
+            Trace &amp; audit
+            {c.traceId && <span className="ml-2 font-mono font-normal text-gray-400">{c.traceId}</span>}
+          </summary>
+          <div className="mt-2 space-y-2">
+            <TraceView c={c} />
+          </div>
+        </details>
+
+        <div className="rounded-lg border border-gray-100 px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[11px] font-medium text-gray-600">
+              Audit report <span className="font-normal text-gray-400">· built by a sandboxed tool</span>
+            </div>
+            <button
+              onClick={report ? downloadReport : generateReport}
+              disabled={reportBusy}
+              className="press rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50"
+            >
+              {reportBusy ? "Running in sandbox…" : report ? "Download" : "Generate"}
+            </button>
+          </div>
+          {reportError && <div className="mt-1.5 text-[11px] text-red-600">⛔ {reportError}</div>}
+          {report && (
+            <div className="mt-2 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                <span className={`rounded-full px-2 py-0.5 font-medium ${report.engine === "sandbox" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                  {report.engine === "sandbox" ? "Generated in isolated sandbox" : "Generated locally (sandbox unavailable)"}
+                </span>
+                <span className="text-gray-400">{report.ms} ms</span>
+                {report.archived && (
+                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 font-medium text-indigo-700">Archived in Blob storage</span>
+                )}
+              </div>
+              <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-gray-900 p-2.5 text-[10.5px] leading-snug text-gray-100">{report.markdown}</pre>
+            </div>
+          )}
+        </div>
       </div>
     </div>
+  );
+}
+
+/** Tool-call log and agent timeline for one case — the per-run trace. */
+function TraceView({ c }: { c: Case }) {
+  const calls: ToolCall[] = c.toolCalls ?? [];
+  const events = c.events.filter(e => e.status !== "running");
+  const t0 = events.length ? new Date(events[0].ts).getTime() : 0;
+  return (
+    <>
+      {calls.length > 0 && (
+        <table className="w-full text-left text-[10.5px]">
+          <thead className="text-gray-400">
+            <tr>
+              <th className="py-0.5 font-medium">Tool</th>
+              <th className="font-medium">Agent</th>
+              <th className="font-medium">Scope</th>
+              <th className="font-medium">Result</th>
+              <th className="text-right font-medium">ms</th>
+            </tr>
+          </thead>
+          <tbody className="text-gray-600">
+            {calls.map((t, i) => (
+              <tr key={i} className="border-t border-gray-100 align-top">
+                <td className="py-0.5 font-mono">{t.tool}</td>
+                <td>{t.agent}</td>
+                <td>{t.scope}</td>
+                <td className={t.status === "ok" ? "text-emerald-600" : "text-red-600"}>
+                  {t.status}{t.note ? ` · ${t.note}` : ""}
+                </td>
+                <td className="text-right tabular-nums">{t.ms}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <ol className="space-y-0.5 text-[10.5px] text-gray-500">
+        {events.map((e, i) => (
+          <li key={i}>
+            <span className="mr-1.5 font-mono text-gray-400">+{((new Date(e.ts).getTime() - t0) / 1000).toFixed(1)}s</span>
+            <span className="font-medium text-gray-600">{e.title}</span> — {e.summary}
+          </li>
+        ))}
+      </ol>
+    </>
   );
 }
 

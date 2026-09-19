@@ -13,6 +13,7 @@ import { decide } from "./decision";
 import { closeCase, executeCase, makeEmitter } from "./execution";
 import { resolutionAgent } from "./resolution";
 import { callPython } from "./python-service";
+import { newTraceId, runTool } from "./tools";
 import { assessRisk, daysSince, detectIssue, evaluatePolicy, findCustomer, issueLabel, money } from "./specialists";
 import { caseIdFor, saveCase } from "./store";
 import type { Case, PolicyResult, RiskResult } from "./types";
@@ -46,6 +47,8 @@ export async function runRefundPipeline(args: {
   const issue = detectIssue(userMessage);
   const c = {
     caseId: caseIdFor(order.orderId),
+    traceId: newTraceId(),
+    toolCalls: [],
     orderId: order.orderId,
     productSummary: order.items.map(i => i.name).join(", "),
     amount: order.totalAmount,
@@ -69,8 +72,9 @@ export async function runRefundPipeline(args: {
   // ── Wave 1: Customer ‖ Order ──
   emit("customer", "running", "Customer Agent", "Identifying the customer…");
   emit("order", "running", "Order Agent", "Retrieving order, payment and shipping data…");
-  const { customer, known } = findCustomer(order.userId);
-  const related = (await listUserOrders(context.store, order.userId)).filter(o => o.orderId !== order.orderId);
+  const { customer, known } = await runTool(c, "customer", "customer.lookup", () => findCustomer(order.userId));
+  const related = (await runTool(c, "order", "order.history", () => listUserOrders(context.store, order.userId)))
+    .filter(o => o.orderId !== order.orderId);
   await pace();
   c.customer = customer;
   emit("customer", "done", "Customer Agent",
@@ -96,24 +100,28 @@ export async function runRefundPipeline(args: {
   emit("risk", "running", "Risk Agent", "Scanning for fraud patterns…");
   // Both run in the Python/FastAPI service in parallel; each falls back to the TypeScript rules if
   // the service is unreachable or returns something unexpected.
-  const [pyPolicy, pyRisk] = await Promise.all([
-    callPython<PolicyResult>(context, env, "/policy", {
+  const [policy, risk] = await Promise.all([
+    runTool(c, "policy", "policy.evaluate", async (): Promise<PolicyResult> => {
+    const py = await callPython<PolicyResult>(context, env, "/policy", {
       order_status: order.status,
       delivered_days: deliveredAge,
       item_text: order.items.map(i => `${i.name} ${i.specs}`).join(" "),
       issue,
-    }, signal),
-    callPython<RiskResult>(context, env, "/risk", {
+    }, signal);
+    return py && typeof py.eligible === "boolean" && Array.isArray(py.checks) ? py : evaluatePolicy(order, issue);
+    }),
+    runTool(c, "risk", "risk.assess", async (): Promise<RiskResult> => {
+    const py = await callPython<RiskResult>(context, env, "/risk", {
       refunds_90d: customer.refunds90d,
       damage_claims_90d: customer.damageClaims90d,
       replacements_90d: customer.replacements90d,
       address_mismatch: customer.addressMismatch,
       member_since_days: customer.memberSinceDays,
       order_total: order.totalAmount,
-    }, signal),
+    }, signal);
+    return py && typeof py.score === "number" && Array.isArray(py.flags) ? py : assessRisk(customer, order);
+    }),
   ]);
-  const policy = pyPolicy && typeof pyPolicy.eligible === "boolean" && Array.isArray(pyPolicy.checks) ? pyPolicy : evaluatePolicy(order, issue);
-  const risk = pyRisk && typeof pyRisk.score === "number" && Array.isArray(pyRisk.flags) ? pyRisk : assessRisk(customer, order);
   const engineLine = (e?: string) => `Engine: ${e === "python" ? "Python · FastAPI service" : "TypeScript rules (fallback)"}`;
   await pace();
   c.policy = policy;
@@ -131,7 +139,8 @@ export async function runRefundPipeline(args: {
   c.resolution = null;
   if (policy.eligible) {
     emit("resolution", "running", "Resolution Agent", "Weighing refund, replacement or store credit…");
-    const { resolution, source } = await resolutionAgent({ order, customer, issue, policy, risk, userMessage }, env, signal);
+    const { resolution, source } = await runTool(c, "resolution", "resolution.propose",
+      () => resolutionAgent({ order, customer, issue, policy, risk, userMessage }, env, signal));
     c.resolution = resolution;
     const label = resolution.action === "replace" ? "Replace item" : resolution.action === "refund" ? "Refund" : "Store credit";
     emit("resolution", "done", "Resolution Agent", `${label} · ${money(resolution.amount)} · ${resolution.confidence}% confidence`,

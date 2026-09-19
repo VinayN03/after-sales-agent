@@ -47,6 +47,20 @@ The **Policy** and **Risk** agents run in a **FastAPI** service ([cloud-function
 - **Interruption** — the Stop button aborts the run server-side. Every side effect (saving a case, executing a refund) is guarded by an abort check, and autonomous actions get a visible 2-second "executing in 2s — press Stop to cancel" window before money moves.
 - **Human-in-the-loop** — proposals wait in an Approvals inbox; support-level and manager-level approvals are enforced server-side per case.
 
+### Track 1 focus areas — where each one lives
+
+| Focus area | What's built | Where |
+|---|---|---|
+| **Tool orchestration** | A tool registry: every capability (customer/order lookup, policy, risk, resolution, refund execution, comms, sandbox report) is a named tool with a scope. The orchestrator calls them through `runTool`, which records each call. | [agents/_agents/tools.ts](agents/_agents/tools.ts), [pipeline.ts](agents/_agents/pipeline.ts) |
+| **Sandbox tools** | The **audit report** tool writes the case data and a fixed script into the platform sandbox (`context.sandbox`: files + shell/code execution), runs it there and reads the result back. No model-written code, no secrets in the sandbox, hard timeout. Falls back to a local renderer (and says so) if the sandbox is unavailable. The browser sandbox tool is not used. | [sandbox-tools.ts](agents/_agents/sandbox-tools.ts), [agents/report](agents/report/index.ts) |
+| **KV / Blob at the Functions layer** | Orders, cases and conversation state live in KV. Audit reports are archived in **Blob** storage (`@edgeone/pages-blob`, strong consistency) by a cloud function, and served back as downloads. | [cloud-functions/reports](cloud-functions/reports/index.ts) |
+| **Permission boundaries** | Deny-by-default grants per agent; the model can only *propose* (`resolution.propose`) and can never call `refund.execute`; irreversible tools need an approval proof (autonomy policy or a human role); a deterministic engine sets who must approve. Roles are **verified server-side with operator passcodes** (`SUPPORT_PASSCODE` / `MANAGER_PASSCODE`, demo defaults `support-demo` / `manager-demo`; production would use an SSO session). `/reset` needs the manager passcode. | [tools.ts](agents/_agents/tools.ts), [auth.ts](agents/_agents/auth.ts), [decision.ts](agents/_agents/decision.ts) |
+| **Secret management** | The AI-gateway key exists only in server-side env (`context.env`); no client code references it, `.env` is git-ignored, and the sandbox is given no environment. | `.env` (ignored), `agents/_shared.ts` |
+| **Cross-turn context** | Per-conversation workflow state in KV, the last turns are fed to the model (intent, FAQ and chat nodes), and the transcript is restored after a page reload (`/history`). | [agents/chat](agents/chat/index.ts), [agents/history](agents/history/index.ts) |
+| **End-to-end tracing** | Every case carries a **trace ID**, a timestamped agent timeline and a tool-call log (tool, agent, scope, result, ms), viewable in the case card ("Trace & audit"). The platform's LangChain observability dashboard is available at `/agent-metrics` in local dev. | [types.ts](agents/_agents/types.ts), [case-card.tsx](app/components/cards/case-card.tsx) |
+
+**Known limitations (stated plainly):** roles use passcodes, not real identity; the sandbox and Blob features need the deployed platform (locally the report falls back and archiving is skipped); restored history is text only (cards aren't re-rendered); the specialist agents are hand-written modules coordinated by our orchestrator, not separate LangGraph nodes.
+
 ### Safety properties
 
 - **Permission boundary** — a manager-only case rejects a support-role approval with `403`.

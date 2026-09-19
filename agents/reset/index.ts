@@ -1,6 +1,7 @@
 import type { AgentContext } from '@edgeone/types';
 import type { BaseStore } from '@langchain/langgraph';
 import { withLocalFallbackStore } from "../_local-store";
+import { verifyManager } from "../_agents/auth";
 /**
  * Reset all application-owned data for the after-sales assistant.
  *
@@ -56,6 +57,13 @@ async function clearConversations(store: any): Promise<number> {
 
 export async function onRequest(rawContext: AgentContext) {
   const context = withLocalFallbackStore(rawContext);
+
+  // Destructive, manager-only operation: require the manager passcode before touching the store.
+  const { passcode } = ((context.request?.body ?? {}) as Record<string, any>);
+  if (!verifyManager(context.env ?? {}, passcode)) {
+    return jsonResponse({ error: "Manager passcode required." }, 401);
+  }
+
   const store = context.store ?? null;
   if (!store) {
     return jsonResponse({

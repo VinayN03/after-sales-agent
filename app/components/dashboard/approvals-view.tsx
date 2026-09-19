@@ -33,7 +33,7 @@ export function ApprovalsView({
         <div>
           <h2 className="text-[20px] font-bold text-slate-900">Approvals</h2>
           <p className="text-[12px] text-slate-500">
-            The agents propose; a human decides. Use the role switch on a case to see the permission boundary — manager-level cases can&apos;t be approved as a support agent.
+            The agents propose; a human decides. Use the role switch on a case to see the permission boundary — manager-level cases can&apos;t be approved as a support agent. Roles are verified server-side with operator passcodes (demo: support-demo / manager-demo).
           </p>
         </div>
         <div className="flex rounded-xl border border-slate-200 bg-white p-0.5 text-[12px] font-medium">

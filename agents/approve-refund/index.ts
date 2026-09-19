@@ -3,10 +3,13 @@ import type { AgentContext } from '@edgeone/types';
  * Approve / reject a pending case — the human-in-the-loop gate.
  *
  * The chat pipeline only ever proposes; execution happens here, after a human decides.
- * Permission boundary: cases routed to "manager" can only be decided with role "manager".
+ * Permission boundary (server-verified): the caller must present an operator passcode that proves the
+ * claimed role (401 otherwise), and cases routed to "manager" can only be decided with role "manager" (403).
+ * In production the role would come from an authenticated SSO session; passcodes are the hackathon stand-in.
  * No real payment is processed — execution calls mock APIs and every step lands in the case's audit trail.
  */
 import { createLogger, getOrder } from "../_shared";
+import { verifyOperator } from "../_agents/auth";
 import { closeCase, executeCase, makeEmitter } from "../_agents/execution";
 import { caseIdFor, getCase } from "../_agents/store";
 import { withLocalFallbackStore } from "../_local-store";
@@ -23,11 +26,16 @@ function json(data: unknown, status = 200) {
 export async function onRequest(rawContext: AgentContext) {
   const context = withLocalFallbackStore(rawContext);
   const body = (context.request?.body ?? {}) as Record<string, any>;
-  const { caseId, orderId, decision, role = "support" } = body;
+  const { caseId, orderId, decision, role = "support", passcode } = body;
   const id = caseId || (orderId ? caseIdFor(orderId) : "");
 
   if (!id || (decision !== "approve" && decision !== "reject") || (role !== "support" && role !== "manager")) {
     return json({ error: "Expected { caseId | orderId, decision: 'approve' | 'reject', role: 'support' | 'manager' }" }, 400);
+  }
+
+  // Server-side permission check: the claimed role must be proven by an operator passcode.
+  if (!verifyOperator(context.env ?? {}, role, passcode)) {
+    return json({ error: "Invalid passcode for this role." }, 401);
   }
 
   const c = await getCase(context, id);
