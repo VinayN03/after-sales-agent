@@ -83,7 +83,12 @@ pip install -r cloud-functions/requirements.txt uvicorn
 (cd cloud-functions/api && uvicorn index:app --port 8001)
 PY_SERVICE_URL=http://127.0.0.1:8001 npm run test:parity
 ```
-Set `PY_SERVICE_URL=http://127.0.0.1:8001` in `.env` to make the local dev server use it (deployed, it is discovered automatically).
+Set `PY_SERVICE_URL=http://127.0.0.1:8001` in `.env` to make the local dev server use it (deployed, and under `edgeone makers dev`, it is discovered automatically).
+
+```bash
+# End-to-end smoke test of a running site (16 checks: all six scenarios, approvals, permission boundary)
+npm run smoke -- "https://<your-site>"     # resets demo data — don't run during a live demo
+```
 
 Deploy: import this repository into EdgeOne Makers (area: overseas).
 
