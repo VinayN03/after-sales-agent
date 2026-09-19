@@ -154,7 +154,7 @@ export default function Home() {
           )}
 
           {/* Kept mounted (hidden when inactive) so the conversation survives switching views. */}
-          <div className={view === "conversations" ? "h-full px-8 pb-6" : "hidden"}>
+          <div className={view === "conversations" ? "h-full px-6 pb-4" : "hidden"}>
             <div className="h-full overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_1px_3px_rgba(16,24,40,0.04)]">
               <ChatPanel key={resetVersion} pendingSend={pendingSend} />
             </div>

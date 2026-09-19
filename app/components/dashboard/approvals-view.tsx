@@ -25,23 +25,23 @@ export function ApprovalsView({
   const conversationId = getConversationId();
 
   return (
-    <div className="mx-auto max-w-[1400px] px-8 pb-10 pt-4">
-      <button onClick={onBack} className="mb-4 flex items-center gap-1.5 text-[13px] font-medium text-slate-500 hover:text-indigo-600">
+    <div className="mx-auto max-w-[1400px] px-6 pb-6 pt-2">
+      <button onClick={onBack} className="mb-2 flex items-center gap-1.5 text-[12px] font-medium text-slate-500 hover:text-indigo-600">
         <ArrowLeft className="h-4 w-4" /> Back to Home
       </button>
-      <div className="mb-5 flex items-end justify-between">
+      <div className="mb-3 flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-[26px] font-bold text-slate-900">Approvals</h2>
-          <p className="text-[14px] text-slate-500">
+          <h2 className="text-[20px] font-bold text-slate-900">Approvals</h2>
+          <p className="text-[12px] text-slate-500">
             The agents propose; a human decides. Use the role switch on a case to see the permission boundary — manager-level cases can&apos;t be approved as a support agent.
           </p>
         </div>
-        <div className="flex rounded-xl border border-slate-200 bg-white p-1 text-[13px] font-medium">
+        <div className="flex rounded-xl border border-slate-200 bg-white p-0.5 text-[12px] font-medium">
           {([["pending", `Pending (${pending.length})`], ["history", `History (${history.length})`]] as const).map(([id, label]) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`rounded-lg px-4 py-1.5 ${tab === id ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
+              className={`rounded-md px-3 py-1 ${tab === id ? "bg-indigo-600 text-white" : "text-slate-500 hover:text-slate-700"}`}
             >
               {label}
             </button>
@@ -58,7 +58,7 @@ export function ApprovalsView({
           <div className="mt-1 text-[13px] text-slate-400">Ask the agent to process a refund from Home or Conversations.</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3 [&>div]:max-w-none">
           {shown.map(c => (
             <CaseCard key={c.caseId} initial={c} conversationId={conversationId} onDecided={onDecided} />
           ))}
