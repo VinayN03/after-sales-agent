@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AgentEvent, Case, CaseReport, Route, ToolCall } from "../../../agents/_agents/types";
 import { AgentTimeline } from "../agent-timeline";
 
@@ -31,6 +31,18 @@ export function CaseCard({ initial, conversationId, onDecided, fullWidth }: { in
   const [shown, setShown] = useState<AgentEvent[]>([]);
   const [tab, setTab] = useState<Tab>("chat");
   const [passcode, setPasscode] = useState("");
+  // Remember the approver passcode for this browser session, per role, so approving several cases needs it only once.
+  useEffect(() => {
+    try {
+      setPasscode(sessionStorage.getItem(`after-sales-passcode-${role}`) ?? "");
+    } catch {}
+  }, [role]);
+  const savePasscode = (value: string) => {
+    setPasscode(value);
+    try {
+      sessionStorage.setItem(`after-sales-passcode-${role}`, value);
+    } catch {}
+  };
   const [report, setReport] = useState<CaseReport | undefined>(initial.report);
   const [reportBusy, setReportBusy] = useState(false);
   const [reportError, setReportError] = useState("");
@@ -149,7 +161,7 @@ export function CaseCard({ initial, conversationId, onDecided, fullWidth }: { in
             <input
               type="password"
               value={passcode}
-              onChange={e => setPasscode(e.target.value)}
+              onChange={e => savePasscode(e.target.value)}
               disabled={busy}
               autoComplete="off"
               placeholder={`${role === "manager" ? "Manager" : "Support"} passcode (demo: ${role === "manager" ? "manager-demo" : "support-demo"})`}

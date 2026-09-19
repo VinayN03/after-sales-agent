@@ -10,8 +10,10 @@ import { ChatPanel } from "../components/chat-panel";
 
 export default function WidgetPage() {
   const [embedded, setEmbedded] = useState(false);
+  const [demo, setDemo] = useState(false);
   useEffect(() => {
     setEmbedded(window.parent !== window);
+    setDemo(new URLSearchParams(window.location.search).has("demo"));
   }, []);
 
   return (
@@ -35,7 +37,7 @@ export default function WidgetPage() {
         )}
       </header>
       <div className="min-h-0 flex-1">
-        <ChatPanel variant="customer" />
+        <ChatPanel variant="customer" showDemo={demo} />
       </div>
     </main>
   );

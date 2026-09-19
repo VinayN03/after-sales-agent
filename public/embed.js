@@ -53,7 +53,7 @@
     if (open && !frame) {
       // Load the chat lazily, the first time it is opened.
       frame = document.createElement("iframe");
-      frame.src = origin + "/widget";
+      frame.src = origin + "/widget" + (script.getAttribute("data-demo") ? "?demo=1" : "");
       frame.title = "After-sales assistant";
       panel.appendChild(frame);
     }

@@ -59,7 +59,7 @@ export default function EmbedDemoPage() {
         </div>
       </section>
 
-      <Script src="/embed.js" strategy="afterInteractive" />
+      <Script src="/embed.js" strategy="afterInteractive" data-demo="1" />
     </main>
   );
 }
