@@ -46,12 +46,15 @@ export interface PolicyResult {
   checks: PolicyCheck[];
   citation: string;
   allowedActions: ResolutionAction[];
+  /** Which implementation produced this result: the Python/FastAPI service or the TypeScript fallback. */
+  engine?: "python" | "typescript";
 }
 
 export interface RiskResult {
   score: number;
   level: "LOW" | "MEDIUM" | "HIGH";
   flags: string[];
+  engine?: "python" | "typescript";
 }
 
 export interface Resolution {

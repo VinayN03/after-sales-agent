@@ -65,6 +65,7 @@ export function evaluatePolicy(order: Order, issue: Issue): PolicyResult {
     checks,
     citation: issue === "changed_mind" ? "Standard Return Policy v3.2" : "Damaged Item Policy v3.2",
     allowedActions,
+    engine: "typescript",
   };
 }
 
@@ -82,5 +83,5 @@ export function assessRisk(customer: Customer, order: Order): RiskResult {
   if (customer.memberSinceDays < 30) add(10, `New account (${customer.memberSinceDays} days old)`);
   if (order.totalAmount > 250) add(10, `High-value order (${money(order.totalAmount)})`);
 
-  return { score, level: score >= 60 ? "HIGH" : score >= 30 ? "MEDIUM" : "LOW", flags };
+  return { score, level: score >= 60 ? "HIGH" : score >= 30 ? "MEDIUM" : "LOW", flags, engine: "typescript" };
 }

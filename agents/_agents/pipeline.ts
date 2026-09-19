@@ -12,9 +12,10 @@ import { listUserOrders } from "../_data/orders";
 import { decide } from "./decision";
 import { closeCase, executeCase, makeEmitter } from "./execution";
 import { resolutionAgent } from "./resolution";
+import { callPython } from "./python-service";
 import { assessRisk, daysSince, detectIssue, evaluatePolicy, findCustomer, issueLabel, money } from "./specialists";
 import { caseIdFor, saveCase } from "./store";
-import type { Case } from "./types";
+import type { Case, PolicyResult, RiskResult } from "./types";
 
 type AgentEnv = Record<string, string | undefined>;
 type Writer = (e: Record<string, unknown>) => void;
@@ -82,17 +83,36 @@ export async function runRefundPipeline(args: {
   // ── Wave 2: Policy ‖ Risk ──
   emit("policy", "running", "Policy Agent", "Checking return eligibility…");
   emit("risk", "running", "Risk Agent", "Scanning for fraud patterns…");
-  const policy = evaluatePolicy(order, issue);
-  const risk = assessRisk(customer, order);
+  // Both run in the Python/FastAPI service in parallel; each falls back to the TypeScript rules if
+  // the service is unreachable or returns something unexpected.
+  const [pyPolicy, pyRisk] = await Promise.all([
+    callPython<PolicyResult>(context, env, "/policy", {
+      order_status: order.status,
+      delivered_days: deliveredAge,
+      item_text: order.items.map(i => `${i.name} ${i.specs}`).join(" "),
+      issue,
+    }),
+    callPython<RiskResult>(context, env, "/risk", {
+      refunds_90d: customer.refunds90d,
+      damage_claims_90d: customer.damageClaims90d,
+      replacements_90d: customer.replacements90d,
+      address_mismatch: customer.addressMismatch,
+      member_since_days: customer.memberSinceDays,
+      order_total: order.totalAmount,
+    }),
+  ]);
+  const policy = pyPolicy && typeof pyPolicy.eligible === "boolean" && Array.isArray(pyPolicy.checks) ? pyPolicy : evaluatePolicy(order, issue);
+  const risk = pyRisk && typeof pyRisk.score === "number" && Array.isArray(pyRisk.flags) ? pyRisk : assessRisk(customer, order);
+  const engineLine = (e?: string) => `Engine: ${e === "python" ? "Python · FastAPI service" : "TypeScript rules (fallback)"}`;
   await pace();
   c.policy = policy;
   c.risk = risk;
   emit("policy", policy.eligible ? "done" : "blocked", "Policy Agent",
     policy.eligible ? `Eligible · ${policy.citation}` : `Not eligible · ${policy.checks.filter(k => !k.pass).map(k => k.label).join(", ")}`,
-    policy.checks.map(k => `${k.pass ? "✓" : "✗"} ${k.label} — ${k.detail}`));
+    [engineLine(policy.engine), ...policy.checks.map(k => `${k.pass ? "✓" : "✗"} ${k.label} — ${k.detail}`)]);
   emit("risk", risk.level === "LOW" ? "done" : risk.level === "MEDIUM" ? "warn" : "blocked", "Risk Agent",
     `Risk ${risk.level} (${risk.score}/100)`,
-    risk.flags.length ? risk.flags : ["No suspicious pattern detected"]);
+    [engineLine(risk.engine), ...(risk.flags.length ? risk.flags : ["No suspicious pattern detected"])]);
   await pace();
 
   // ── Resolution (LLM) ──
